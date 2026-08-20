@@ -21,3 +21,6 @@ mongoose
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => console.error('MongoDB connection error:', err));
+
+  // Add this line with your other route definitions in backend/server.js:
+app.use('/api/teams', require('./routes/teamRoutes'));
