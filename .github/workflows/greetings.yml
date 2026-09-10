@@ -18,16 +18,16 @@ jobs:
     steps:
       - uses: actions/first-interaction@v3
         with:
-          issue-message: |
+          issue_message: |
             👋 Hello! Thanks for opening your first issue in ArenaElite!
-            
+
             We appreciate your contribution. 🏆
-            
+
             The ArenaElite team will review your issue soon.
 
-          pr-message: |
+          pr_message: |
             👋 Hello! Thanks for opening your first Pull Request in ArenaElite!
-            
+
             We appreciate your contribution. 🏆
-            
+
             The ArenaElite team will review your PR soon.
