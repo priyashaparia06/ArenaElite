@@ -23,26 +23,39 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const userRole = role || 'CAPTAIN';
+    const approvalStatus = userRole === 'ORGANIZER' ? 'PENDING' : 'APPROVED';
+
     const user = await User.create({
       name,
       email,
       phone,
       password: hashedPassword,
-      role: role || 'CAPTAIN',
+      role: userRole,
       district,
-      organizationName,
+      organizationName: userRole === 'ORGANIZER' ? organizationName : null,
+      approvalStatus,
+      isActive: true,
     });
 
     const token = generateToken(user);
 
     res.status(201).json({
+      message:
+        userRole === 'ORGANIZER'
+          ? 'Registration successful! Your organizer account is pending Admin approval.'
+          : 'Registration successful!',
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
         district: user.district,
+        organizationName: user.organizationName,
+        approvalStatus: user.approvalStatus,
+        isActive: user.isActive,
       },
     });
   } catch (error) {
@@ -57,12 +70,31 @@ exports.login = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Your account has been deactivated by the platform administrator.' });
+    }
+
+    if (user.role === 'ORGANIZER' && user.approvalStatus !== 'APPROVED') {
+      if (user.approvalStatus === 'PENDING') {
+        return res.status(403).json({
+          message: 'Your organizer account is pending approval by the platform administrator.',
+          approvalStatus: 'PENDING',
+        });
+      }
+      if (user.approvalStatus === 'REJECTED') {
+        return res.status(403).json({
+          message: 'Your organizer registration request was rejected by the administrator.',
+          approvalStatus: 'REJECTED',
+        });
+      }
     }
 
     const token = generateToken(user);
@@ -73,8 +105,12 @@ exports.login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
         district: user.district,
+        organizationName: user.organizationName,
+        approvalStatus: user.approvalStatus,
+        isActive: user.isActive,
       },
     });
   } catch (error) {
@@ -86,6 +122,9 @@ exports.login = async (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

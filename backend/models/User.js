@@ -13,6 +13,13 @@ const userSchema = new mongoose.Schema(
     },
     district: { type: String, required: true, trim: true },
     organizationName: { type: String, default: null }, // Used if role === 'ORGANIZER'
+    approvalStatus: {
+      type: String,
+      enum: ['PENDING', 'APPROVED', 'REJECTED'],
+      default: function () {
+        return this.role === 'ORGANIZER' ? 'PENDING' : 'APPROVED';
+      },
+    },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
