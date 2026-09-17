@@ -64,7 +64,6 @@ export default function OrganizerDashboard() {
     e.preventDefault();
     try {
       setError('');
-      // Find venue name if selected from venueId
       const selectedVenueObj = venues.find((v) => v._id === formData.venueId);
       const venueNameToUse = selectedVenueObj ? selectedVenueObj.name : formData.venueName;
 
@@ -113,7 +112,6 @@ export default function OrganizerDashboard() {
         status,
       });
       setSuccess(`Team status updated to ${status}!`);
-      // Refresh registrations
       const res = await API.get(`/tournaments/${selectedTournament._id}/registrations`);
       setRegistrationsData(res.data);
       fetchData();
@@ -122,7 +120,6 @@ export default function OrganizerDashboard() {
     }
   };
 
-  // Filter venues by selected district and sport in creation modal
   const filteredVenues = venues.filter((v) => {
     const matchesDistrict = !formData.district || v.district.toLowerCase() === formData.district.toLowerCase();
     const matchesSport = !formData.sportCategory || v.supportedSports?.includes(formData.sportCategory);
@@ -132,20 +129,20 @@ export default function OrganizerDashboard() {
   const isApproved = user?.approvalStatus === 'APPROVED';
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+    <div style={{ padding: '28px 24px', maxWidth: '1300px', margin: '0 auto', width: '100%' }}>
       {/* Top Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#f8fafc' }}>
+            <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: '#0f172a' }}>
               📋 Tournament Organizer Command Center
             </h1>
             <span className={`badge ${isApproved ? 'badge-approved' : 'badge-pending'}`}>
               {user?.approvalStatus || 'PENDING'}
             </span>
           </div>
-          <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: 4 }}>
-            Organization: <strong style={{ color: '#38bdf8' }}>{user?.organizationName || 'Independent Organizer'}</strong> | District: {user?.district}
+          <p style={{ color: '#64748b', fontSize: '14px', marginTop: 4 }}>
+            Organization: <strong style={{ color: '#0284c7' }}>{user?.organizationName || 'Independent Organizer'}</strong> | District: {user?.district}
           </p>
         </div>
 
@@ -156,10 +153,10 @@ export default function OrganizerDashboard() {
               background: '#0284c7',
               color: '#fff',
               border: 'none',
-              padding: '10px 20px',
-              borderRadius: 8,
+              padding: '10px 18px',
+              borderRadius: 6,
               fontWeight: 600,
-              fontSize: '15px',
+              fontSize: '14px',
             }}
           >
             + Create New Tournament
@@ -169,61 +166,61 @@ export default function OrganizerDashboard() {
 
       {/* Warning if Pending */}
       {!isApproved && (
-        <div style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid #f59e0b', color: '#fbbf24', padding: '16px', borderRadius: 8, marginBottom: 24 }}>
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', padding: '16px', borderRadius: 8, marginBottom: 24, fontSize: '14px' }}>
           ⏳ <strong>Account Pending Admin Verification:</strong> Your organizer account is currently awaiting review by the platform administrator. Once verified, you will be able to publish tournaments and approve team rosters.
         </div>
       )}
 
       {/* Notifications */}
       {error && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#fca5a5', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+        <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '14px' }}>
           ⚠️ {error}
         </div>
       )}
       {success && (
-        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#6ee7b7', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+        <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', color: '#15803d', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '14px' }}>
           ✅ {success}
         </div>
       )}
 
       {/* Overview Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
-        <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-          <span style={{ color: '#94a3b8', fontSize: '13px' }}>My Hosted Tournaments</span>
-          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#38bdf8', marginTop: 4 }}>{tournaments.length}</div>
-          <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>Active & scheduled events</div>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Hosted Tournaments</span>
+          <div style={{ fontSize: '26px', fontWeight: 'bold', color: '#0284c7', marginTop: 4 }}>{tournaments.length}</div>
+          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>Active & scheduled events</div>
         </div>
-        <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-          <span style={{ color: '#94a3b8', fontSize: '13px' }}>Total Team Applications</span>
-          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#10b981', marginTop: 4 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Team Applications</span>
+          <div style={{ fontSize: '26px', fontWeight: 'bold', color: '#16a34a', marginTop: 4 }}>
             {tournaments.reduce((acc, t) => acc + (t.registeredTeams?.length || 0), 0)}
           </div>
-          <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>Across all competitions</div>
+          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>Across all competitions</div>
         </div>
-        <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-          <span style={{ color: '#94a3b8', fontSize: '13px' }}>Pending Squad Reviews</span>
-          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#f59e0b', marginTop: 4 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Pending Squad Reviews</span>
+          <div style={{ fontSize: '26px', fontWeight: 'bold', color: '#b45309', marginTop: 4 }}>
             {tournaments.reduce(
               (acc, t) => acc + (t.registeredTeams?.filter((r) => r.status === 'PENDING').length || 0),
               0
             )}
           </div>
-          <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>Awaiting your decision</div>
+          <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>Awaiting your decision</div>
         </div>
       </div>
 
       {/* Tournaments List Section */}
-      <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#f8fafc', marginBottom: 16 }}>
-        🏆 Hosted Tournaments & Applications
+      <h2 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 16 }}>
+        🏆 Hosted Tournaments & Squad Applications
       </h2>
 
       {tournaments.length === 0 ? (
-        <div style={{ background: '#131b2e', border: '1px dashed #24324f', borderRadius: 12, padding: '40px', textAlign: 'center' }}>
-          <p style={{ color: '#94a3b8', fontSize: '16px', marginBottom: 12 }}>You have not created any tournaments yet.</p>
+        <div style={{ background: '#ffffff', border: '1px dashed #cbd5e1', borderRadius: 12, padding: '40px', textAlign: 'center' }}>
+          <p style={{ color: '#64748b', fontSize: '15px', marginBottom: 12 }}>You have not created any tournaments yet.</p>
           {isApproved && (
             <button
               onClick={() => setShowCreateModal(true)}
-              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 6 }}
+              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 6, fontSize: '13px', fontWeight: 600 }}
             >
               + Create Your First Tournament
             </button>
@@ -240,13 +237,14 @@ export default function OrganizerDashboard() {
               <div
                 key={t._id}
                 style={{
-                  background: '#131b2e',
-                  border: '1px solid #24324f',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
                   borderRadius: 12,
-                  padding: 20,
+                  padding: 22,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 }}
               >
                 <div>
@@ -254,66 +252,66 @@ export default function OrganizerDashboard() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: '24px' }}>{sportInfo?.icon || '🏆'}</span>
                       <div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>{t.title}</h3>
-                        <span style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 600 }}>{t.sportCategory}</span>
+                        <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{t.title}</h3>
+                        <span style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>{t.sportCategory}</span>
                       </div>
                     </div>
                     <span className="badge badge-green">{t.status.replace('_', ' ')}</span>
                   </div>
 
-                  <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: 14 }}>
+                  <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14 }}>
                     {t.description || 'Inter-college championship event.'}
                   </p>
 
-                  <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#94a3b8' }}>📍 Venue & Ground:</span>
-                      <strong style={{ color: '#fff' }}>{t.venueName}</strong>
+                      <span style={{ color: '#64748b' }}>📍 Venue & Ground:</span>
+                      <strong style={{ color: '#0f172a' }}>{t.venueName}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#94a3b8' }}>📅 Tournament Dates:</span>
-                      <strong style={{ color: '#cbd5e1' }}>
+                      <span style={{ color: '#64748b' }}>📅 Event Dates:</span>
+                      <strong style={{ color: '#334155' }}>
                         {new Date(t.startDate).toLocaleDateString()} – {new Date(t.endDate).toLocaleDateString()}
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#94a3b8' }}>⏰ Registration Deadline:</span>
-                      <strong style={{ color: '#f59e0b' }}>
+                      <span style={{ color: '#64748b' }}>⏰ Registration Deadline:</span>
+                      <strong style={{ color: '#b45309' }}>
                         {new Date(t.registrationDeadline).toLocaleDateString()}
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>🏆 Format:</span>
-                      <strong style={{ color: '#38bdf8' }}>{t.format}</strong>
+                      <span style={{ color: '#64748b' }}>🏆 Format:</span>
+                      <strong style={{ color: '#0284c7' }}>{t.format}</strong>
                     </div>
                   </div>
 
                   {/* Slot Progress Bar */}
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: 4 }}>
-                      <span style={{ color: '#94a3b8' }}>Approved Teams:</span>
-                      <span style={{ color: '#fff', fontWeight: 600 }}>
+                      <span style={{ color: '#64748b' }}>Approved Teams:</span>
+                      <span style={{ color: '#0f172a', fontWeight: 600 }}>
                         {approvedTeams.length} / {t.maxTeams} slots filled
                       </span>
                     </div>
-                    <div style={{ height: 8, background: '#1e293b', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ height: 6, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
                       <div
                         style={{
                           height: '100%',
                           width: `${Math.min((approvedTeams.length / t.maxTeams) * 100, 100)}%`,
-                          background: approvedTeams.length >= t.maxTeams ? '#10b981' : '#0284c7',
+                          background: approvedTeams.length >= t.maxTeams ? '#16a34a' : '#0284c7',
                         }}
                       />
                     </div>
                     {pendingTeams.length > 0 && (
-                      <div style={{ color: '#f59e0b', fontSize: '12px', marginTop: 4, fontWeight: 500 }}>
+                      <div style={{ color: '#b45309', fontSize: '12px', marginTop: 4, fontWeight: 600 }}>
                         ⚡ {pendingTeams.length} squad application(s) awaiting approval
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid #1e293b', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#64748b', fontSize: '12px' }}>{t.registeredTeams?.length || 0} teams applied</span>
                   <button
                     onClick={() => openReviewModal(t)}
@@ -340,12 +338,12 @@ export default function OrganizerDashboard() {
       {showCreateModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '650px' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 16 }}>
               🏆 Launch New Sports Tournament
             </h3>
-            <form onSubmit={handleCreateTournament} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <form onSubmit={handleCreateTournament} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Tournament Title</label>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Tournament Title</label>
                 <input
                   placeholder="e.g. Gujarat State Inter-Collegiate Football Cup 2026"
                   required
@@ -356,7 +354,7 @@ export default function OrganizerDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Description</label>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Description</label>
                 <textarea
                   rows="2"
                   placeholder="Short description, eligibility criteria..."
@@ -368,7 +366,7 @@ export default function OrganizerDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Sport Category</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Sport Category</label>
                   <select
                     value={formData.sportCategory}
                     onChange={(e) => setFormData({ ...formData, sportCategory: e.target.value })}
@@ -382,7 +380,7 @@ export default function OrganizerDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>District</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District</label>
                   <input
                     placeholder="e.g. Rajkot, Boston"
                     required
@@ -395,7 +393,7 @@ export default function OrganizerDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
                     Venue / Ground (Verified Grounds)
                   </label>
                   <select
@@ -419,7 +417,7 @@ export default function OrganizerDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
                     Custom Venue Name (if not in list)
                   </label>
                   <input
@@ -434,7 +432,7 @@ export default function OrganizerDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Start Date</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Start Date</label>
                   <input
                     type="date"
                     required
@@ -444,7 +442,7 @@ export default function OrganizerDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>End Date</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>End Date</label>
                   <input
                     type="date"
                     required
@@ -454,7 +452,7 @@ export default function OrganizerDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Reg Deadline</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Reg Deadline</label>
                   <input
                     type="date"
                     required
@@ -467,7 +465,7 @@ export default function OrganizerDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Tournament Format</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Tournament Format</label>
                   <select
                     value={formData.format}
                     onChange={(e) => setFormData({ ...formData, format: e.target.value })}
@@ -479,7 +477,7 @@ export default function OrganizerDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Max Teams</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Max Teams</label>
                   <select
                     value={formData.maxTeams}
                     onChange={(e) => setFormData({ ...formData, maxTeams: Number(e.target.value) })}
@@ -494,7 +492,7 @@ export default function OrganizerDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Specific Tournament Rules</label>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Specific Tournament Rules</label>
                 <textarea
                   rows="2"
                   placeholder="Tie-break rules, kit guidelines, reporting time..."
@@ -508,13 +506,13 @@ export default function OrganizerDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 16px' }}
+                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 16px' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px' }}
+                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px', fontWeight: 600 }}
                 >
                   Publish Tournament
                 </button>
@@ -530,23 +528,23 @@ export default function OrganizerDashboard() {
           <div className="modal-content" style={{ maxWidth: '850px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
-                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
+                <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a' }}>
                   👥 Squad Registrations: {registrationsData.title}
                 </h3>
-                <span style={{ color: '#38bdf8', fontSize: '13px' }}>
+                <span style={{ color: '#0284c7', fontSize: '13px', fontWeight: 600 }}>
                   Capacity: {registrationsData.approvedCount} / {registrationsData.maxTeams} Teams Approved
                 </span>
               </div>
               <button
                 onClick={() => setShowReviewModal(false)}
-                style={{ background: '#1e293b', border: '1px solid #334155', color: '#fff', padding: '6px 12px', borderRadius: 4 }}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', padding: '6px 12px', borderRadius: 4, fontWeight: 600 }}
               >
                 ✕ Close
               </button>
             </div>
 
             {registrationsData.registeredTeams.length === 0 ? (
-              <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8' }}>
+              <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
                 No teams have registered for this tournament yet.
               </div>
             ) : (
@@ -560,16 +558,17 @@ export default function OrganizerDashboard() {
                     <div
                       key={team._id}
                       style={{
-                        background: '#0f172a',
-                        border: '1px solid #24324f',
-                        borderRadius: 10,
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: 8,
                         padding: '16px',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <h4 style={{ fontSize: '17px', fontWeight: 'bold', color: '#fff' }}>{team.name}</h4>
+                            <h4 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>{team.name}</h4>
                             <span
                               className={`badge ${
                                 reg.status === 'APPROVED'
@@ -582,8 +581,8 @@ export default function OrganizerDashboard() {
                               {reg.status}
                             </span>
                           </div>
-                          <div style={{ color: '#94a3b8', fontSize: '13px', marginTop: 2 }}>
-                            Captain: <strong style={{ color: '#e2e8f0' }}>{team.captainId?.name || reg.appliedBy?.name}</strong> | Phone: {team.captainId?.phone || reg.appliedBy?.phone} | District: {team.district}
+                          <div style={{ color: '#475569', fontSize: '13px', marginTop: 2 }}>
+                            Captain: <strong style={{ color: '#0f172a' }}>{team.captainId?.name || reg.appliedBy?.name}</strong> | Phone: {team.captainId?.phone || reg.appliedBy?.phone} | District: {team.district}
                           </div>
                           <div style={{ color: '#64748b', fontSize: '12px', marginTop: 2 }}>
                             Registered: {new Date(reg.appliedAt).toLocaleString()} • {team.players?.length || 0} Players in Roster
@@ -593,7 +592,7 @@ export default function OrganizerDashboard() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <button
                             onClick={() => setExpandedRosterTeamId(isExpanded ? null : team._id)}
-                            style={{ background: '#1e293b', border: '1px solid #334155', color: '#38bdf8', padding: '6px 12px', fontSize: '12px' }}
+                            style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#0f172a', padding: '6px 12px', fontSize: '12px', fontWeight: 500 }}
                           >
                             {isExpanded ? 'Hide Squad' : 'Inspect Squad Roster'}
                           </button>
@@ -603,11 +602,12 @@ export default function OrganizerDashboard() {
                               onClick={() => handleUpdateTeamStatus(team._id, 'APPROVED')}
                               disabled={registrationsData.approvedCount >= registrationsData.maxTeams}
                               style={{
-                                background: registrationsData.approvedCount >= registrationsData.maxTeams ? '#475569' : '#10b981',
+                                background: registrationsData.approvedCount >= registrationsData.maxTeams ? '#94a3b8' : '#16a34a',
                                 color: '#fff',
                                 border: 'none',
                                 padding: '6px 14px',
                                 fontSize: '12px',
+                                fontWeight: 600,
                                 cursor: registrationsData.approvedCount >= registrationsData.maxTeams ? 'not-allowed' : 'pointer',
                               }}
                             >
@@ -618,7 +618,7 @@ export default function OrganizerDashboard() {
                           {reg.status !== 'REJECTED' && (
                             <button
                               onClick={() => handleUpdateTeamStatus(team._id, 'REJECTED')}
-                              style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 14px', fontSize: '12px' }}
+                              style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '6px 14px', fontSize: '12px', fontWeight: 600 }}
                             >
                               Reject
                             </button>
@@ -628,15 +628,15 @@ export default function OrganizerDashboard() {
 
                       {/* Expandable Squad Roster Table */}
                       {isExpanded && (
-                        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #1e293b' }}>
-                          <h5 style={{ color: '#38bdf8', fontSize: '13px', textTransform: 'uppercase', marginBottom: 8, fontWeight: 600 }}>
+                        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #f1f5f9' }}>
+                          <h5 style={{ color: '#0284c7', fontSize: '13px', textTransform: 'uppercase', marginBottom: 8, fontWeight: 700 }}>
                             📋 Official Squad Roster ({team.players?.length || 0} Registered Players)
                           </h5>
                           {team.players && team.players.length > 0 ? (
                             <div style={{ overflowX: 'auto' }}>
                               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                                 <thead>
-                                  <tr style={{ color: '#94a3b8', borderBottom: '1px solid #24324f' }}>
+                                  <tr style={{ color: '#475569', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                                     <th style={{ padding: '6px 10px' }}>Jersey #</th>
                                     <th style={{ padding: '6px 10px' }}>Player Name</th>
                                     <th style={{ padding: '6px 10px' }}>Position / Role</th>
@@ -645,13 +645,13 @@ export default function OrganizerDashboard() {
                                 </thead>
                                 <tbody>
                                   {team.players.map((p, idx) => (
-                                    <tr key={idx} style={{ borderBottom: '1px solid #182238' }}>
-                                      <td style={{ padding: '6px 10px', color: '#f59e0b', fontWeight: 'bold' }}>
+                                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                      <td style={{ padding: '6px 10px', color: '#b45309', fontWeight: 'bold' }}>
                                         #{p.jerseyNumber}
                                       </td>
-                                      <td style={{ padding: '6px 10px', color: '#fff' }}>{p.fullName}</td>
-                                      <td style={{ padding: '6px 10px', color: '#cbd5e1' }}>{p.role}</td>
-                                      <td style={{ padding: '6px 10px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                      <td style={{ padding: '6px 10px', color: '#0f172a' }}>{p.fullName}</td>
+                                      <td style={{ padding: '6px 10px', color: '#475569' }}>{p.role}</td>
+                                      <td style={{ padding: '6px 10px', color: '#64748b', fontFamily: 'monospace' }}>
                                         {p.studentOrGovtId}
                                       </td>
                                     </tr>
@@ -660,7 +660,7 @@ export default function OrganizerDashboard() {
                               </table>
                             </div>
                           ) : (
-                            <p style={{ color: '#f43f5e', fontSize: '12px' }}>
+                            <p style={{ color: '#dc2626', fontSize: '12px' }}>
                               ⚠️ No players found in this team roster.
                             </p>
                           )}

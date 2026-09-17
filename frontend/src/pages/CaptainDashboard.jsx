@@ -150,7 +150,6 @@ export default function CaptainDashboard() {
     }
   };
 
-  // Filter tournaments
   const filteredTournaments = tournaments.filter((t) => {
     const matchSport = !filterSport || t.sportCategory === filterSport;
     const matchDistrict = !filterDistrict || t.district.toLowerCase().includes(filterDistrict.toLowerCase());
@@ -158,21 +157,21 @@ export default function CaptainDashboard() {
   });
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+    <div style={{ padding: '28px 24px', maxWidth: '1300px', margin: '0 auto', width: '100%' }}>
       {/* Top Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#f8fafc', marginBottom: 4 }}>
+          <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>
             ⚽ Team Captain Headquarters
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '14px' }}>
-            Captain: <strong style={{ color: '#38bdf8' }}>{user?.name}</strong> | Home District: {user?.district}
+          <p style={{ color: '#64748b', fontSize: '14px' }}>
+            Captain: <strong style={{ color: '#0284c7' }}>{user?.name}</strong> | Home District: {user?.district}
           </p>
         </div>
         {activeTab === 'teams' && (
           <button
             onClick={() => setShowCreateTeamModal(true)}
-            style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 8, fontWeight: 600 }}
+            style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 6, fontWeight: 600, fontSize: '13px' }}
           >
             + Register New Team
           </button>
@@ -181,18 +180,18 @@ export default function CaptainDashboard() {
 
       {/* Alert Notices */}
       {error && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#fca5a5', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+        <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '14px' }}>
           ⚠️ {error}
         </div>
       )}
       {success && (
-        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#6ee7b7', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+        <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', color: '#15803d', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '14px' }}>
           ✅ {success}
         </div>
       )}
 
       {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #24324f', marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #e2e8f0', marginBottom: 24 }}>
         {[
           { id: 'teams', label: `🛡️ My Teams & Squads (${teams.length})` },
           { id: 'browse', label: `🏆 Explore Tournaments (${tournaments.length})` },
@@ -202,12 +201,12 @@ export default function CaptainDashboard() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
-              background: activeTab === tab.id ? '#1e293b' : 'transparent',
-              color: activeTab === tab.id ? '#38bdf8' : '#94a3b8',
+              background: 'transparent',
+              color: activeTab === tab.id ? '#0284c7' : '#64748b',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '2px solid #38bdf8' : '2px solid transparent',
-              padding: '10px 20px',
-              fontSize: '15px',
+              borderBottom: activeTab === tab.id ? '2px solid #0284c7' : '2px solid transparent',
+              padding: '10px 18px',
+              fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -221,14 +220,14 @@ export default function CaptainDashboard() {
       {activeTab === 'teams' && (
         <div>
           {teams.length === 0 ? (
-            <div style={{ background: '#131b2e', border: '1px dashed #24324f', borderRadius: 12, padding: '40px', textAlign: 'center' }}>
-              <h3 style={{ color: '#fff', fontSize: '18px', marginBottom: 8 }}>No teams registered yet</h3>
-              <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: 16 }}>
+            <div style={{ background: '#ffffff', border: '1px dashed #cbd5e1', borderRadius: 12, padding: '40px', textAlign: 'center' }}>
+              <h3 style={{ color: '#0f172a', fontSize: '17px', marginBottom: 6 }}>No teams registered yet</h3>
+              <p style={{ color: '#64748b', fontSize: '13px', marginBottom: 16 }}>
                 Create a team profile and add your players with jersey numbers and student/govt ID proofs.
               </p>
               <button
                 onClick={() => setShowCreateTeamModal(true)}
-                style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 6 }}
+                style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: 6, fontSize: '13px', fontWeight: 600 }}
               >
                 + Create Your First Team
               </button>
@@ -237,7 +236,7 @@ export default function CaptainDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 300px) 1fr', gap: 24 }}>
               {/* Left Column: Team Selector */}
               <div>
-                <h3 style={{ fontSize: '16px', color: '#94a3b8', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <h3 style={{ fontSize: '14px', color: '#64748b', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
                   Registered Squads
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -250,19 +249,20 @@ export default function CaptainDashboard() {
                         key={t._id}
                         onClick={() => setSelectedTeam(t)}
                         style={{
-                          background: isSelected ? '#1e293b' : '#131b2e',
-                          border: isSelected ? '2px solid #38bdf8' : '1px solid #24324f',
-                          borderRadius: 10,
+                          background: isSelected ? '#f0f9ff' : '#ffffff',
+                          border: isSelected ? '2px solid #0284c7' : '1px solid #e2e8f0',
+                          borderRadius: 8,
                           padding: 14,
                           cursor: 'pointer',
                           transition: 'all 0.15s',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '16px' }}>{t.name}</div>
+                          <div style={{ fontWeight: 'bold', color: '#0f172a', fontSize: '15px' }}>{t.name}</div>
                           <span style={{ fontSize: '18px' }}>{sportInfo?.icon || '🏆'}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, fontSize: '12px', color: '#94a3b8' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, fontSize: '12px', color: '#64748b' }}>
                           <span className="badge badge-blue">{t.sport}</span>
                           <span>{t.players.length} Players</span>
                         </div>
@@ -274,31 +274,31 @@ export default function CaptainDashboard() {
 
               {/* Right Column: Selected Team Details & Roster */}
               {selectedTeam && (
-                <div style={{ background: '#131b2e', border: '1px solid #24324f', borderRadius: 12, padding: 24 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #24324f', paddingBottom: 16 }}>
+                <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: 16 }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <h2 style={{ fontSize: '22px', fontWeight: 'bold', color: '#fff' }}>{selectedTeam.name}</h2>
+                        <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a' }}>{selectedTeam.name}</h2>
                         <span className="badge badge-green">{selectedTeam.sport}</span>
                       </div>
-                      <span style={{ color: '#94a3b8', fontSize: '13px' }}>📍 Home District: {selectedTeam.district}</span>
+                      <span style={{ color: '#64748b', fontSize: '13px' }}>📍 Home District: {selectedTeam.district}</span>
                     </div>
                     <button
                       onClick={() => handleDeleteTeam(selectedTeam._id)}
-                      style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '6px 12px', borderRadius: 6, fontSize: '12px' }}
+                      style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: '6px 12px', borderRadius: 4, fontSize: '12px', fontWeight: 500 }}
                     >
                       Delete Team
                     </button>
                   </div>
 
                   {/* Add Player to Squad Form */}
-                  <div style={{ marginTop: 20, padding: 18, background: '#0f172a', borderRadius: 10, border: '1px solid #24324f' }}>
-                    <h4 style={{ color: '#38bdf8', fontSize: '15px', fontWeight: 600, marginBottom: 12 }}>
+                  <div style={{ marginTop: 20, padding: 18, background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                    <h4 style={{ color: '#0284c7', fontSize: '14px', fontWeight: 700, marginBottom: 12 }}>
                       + Add Player to Squad Roster
                     </h4>
                     <form onSubmit={handleAddPlayer} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, alignItems: 'end' }}>
                       <div>
-                        <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Full Name</label>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Full Name</label>
                         <input
                           required
                           placeholder="e.g. Lionel Messi"
@@ -308,7 +308,7 @@ export default function CaptainDashboard() {
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Jersey #</label>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Jersey #</label>
                         <input
                           type="number"
                           required
@@ -321,7 +321,7 @@ export default function CaptainDashboard() {
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Position / Role</label>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Position / Role</label>
                         <input
                           required
                           placeholder="e.g. Forward, Goalkeeper"
@@ -331,7 +331,7 @@ export default function CaptainDashboard() {
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Student / Govt ID Proof</label>
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Student / Govt ID Proof</label>
                         <input
                           required
                           placeholder="e.g. ID-88421"
@@ -351,47 +351,45 @@ export default function CaptainDashboard() {
 
                   {/* Players Roster Table */}
                   <div style={{ marginTop: 24 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                      <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>
-                        Current Squad Roster ({selectedTeam.players.length} Players)
-                      </h4>
-                    </div>
+                    <h4 style={{ color: '#0f172a', fontSize: '15px', fontWeight: 600, marginBottom: 12 }}>
+                      Current Squad Roster ({selectedTeam.players.length} Players)
+                    </h4>
 
                     {selectedTeam.players.length === 0 ? (
-                      <p style={{ color: '#64748b', fontStyle: 'italic', padding: '12px 0' }}>
+                      <p style={{ color: '#94a3b8', fontStyle: 'italic', padding: '12px 0' }}>
                         No players registered yet. Use the form above to add your lineup.
                       </p>
                     ) : (
                       <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                           <thead>
-                            <tr style={{ borderBottom: '1px solid #24324f', color: '#94a3b8' }}>
-                              <th style={{ padding: '10px 12px' }}>Jersey #</th>
-                              <th style={{ padding: '10px 12px' }}>Player Name</th>
-                              <th style={{ padding: '10px 12px' }}>Role</th>
-                              <th style={{ padding: '10px 12px' }}>ID Proof</th>
-                              <th style={{ padding: '10px 12px', textAlign: 'right' }}>Actions</th>
+                            <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569' }}>
+                              <th style={{ padding: '8px 12px' }}>Jersey #</th>
+                              <th style={{ padding: '8px 12px' }}>Player Name</th>
+                              <th style={{ padding: '8px 12px' }}>Role</th>
+                              <th style={{ padding: '8px 12px' }}>ID Proof</th>
+                              <th style={{ padding: '8px 12px', textAlign: 'right' }}>Actions</th>
                             </tr>
                           </thead>
                           <tbody>
                             {selectedTeam.players.map((p) => (
-                              <tr key={p._id} style={{ borderBottom: '1px solid #1e293b' }}>
-                                <td style={{ padding: '10px 12px', fontWeight: 'bold', color: '#f59e0b' }}>
+                              <tr key={p._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#b45309' }}>
                                   #{p.jerseyNumber}
                                 </td>
-                                <td style={{ padding: '10px 12px', color: '#fff' }}>{p.fullName}</td>
-                                <td style={{ padding: '10px 12px' }}>
-                                  <span style={{ background: '#0f172a', border: '1px solid #24324f', padding: '2px 8px', borderRadius: 4, color: '#cbd5e1' }}>
+                                <td style={{ padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{p.fullName}</td>
+                                <td style={{ padding: '8px 12px' }}>
+                                  <span style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: 4, color: '#334155' }}>
                                     {p.role}
                                   </span>
                                 </td>
-                                <td style={{ padding: '10px 12px', color: '#94a3b8', fontFamily: 'monospace' }}>
+                                <td style={{ padding: '8px 12px', color: '#64748b', fontFamily: 'monospace' }}>
                                   {p.studentOrGovtId}
                                 </td>
-                                <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                <td style={{ padding: '8px 12px', textAlign: 'right' }}>
                                   <button
                                     onClick={() => handleRemovePlayer(p._id)}
-                                    style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '13px' }}
+                                    style={{ background: 'transparent', border: 'none', color: '#dc2626', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
                                   >
                                     Remove
                                   </button>
@@ -433,29 +431,29 @@ export default function CaptainDashboard() {
               onChange={(e) => setFilterDistrict(e.target.value)}
               style={{ width: '280px' }}
             />
-            <div style={{ color: '#94a3b8', fontSize: '14px', alignSelf: 'center' }}>
+            <div style={{ color: '#64748b', fontSize: '13px', alignSelf: 'center' }}>
               Showing {filteredTournaments.length} open competitions
             </div>
           </div>
 
           {/* Tournaments Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20 }}>
             {filteredTournaments.map((t) => {
               const sportInfo = sports.find((s) => s.code === t.sportCategory);
-              // Check if captain has already registered a team
               const alreadyApplied = myApplications.some((a) => a.tournamentId === t._id);
 
               return (
                 <div
                   key={t._id}
                   style={{
-                    background: '#131b2e',
-                    border: '1px solid #24324f',
-                    borderRadius: 12,
-                    padding: 20,
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 10,
+                    padding: 22,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   }}
                 >
                   <div>
@@ -463,45 +461,45 @@ export default function CaptainDashboard() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: '24px' }}>{sportInfo?.icon || '🏆'}</span>
                         <div>
-                          <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>{t.title}</h3>
-                          <span style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 600 }}>{t.sportCategory}</span>
+                          <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{t.title}</h3>
+                          <span style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>{t.sportCategory}</span>
                         </div>
                       </div>
                       <span className="badge badge-green">Open</span>
                     </div>
 
-                    <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: 14 }}>
+                    <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14 }}>
                       {t.description || 'Open tournament for qualified squads.'}
                     </p>
 
-                    <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ color: '#94a3b8' }}>📍 Venue & District:</span>
-                        <strong style={{ color: '#fff' }}>{t.venueName} ({t.district})</strong>
+                        <span style={{ color: '#64748b' }}>📍 Venue & District:</span>
+                        <strong style={{ color: '#0f172a' }}>{t.venueName} ({t.district})</strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ color: '#94a3b8' }}>📅 Event Schedule:</span>
-                        <strong style={{ color: '#cbd5e1' }}>
+                        <span style={{ color: '#64748b' }}>📅 Event Schedule:</span>
+                        <strong style={{ color: '#334155' }}>
                           {new Date(t.startDate).toLocaleDateString()} – {new Date(t.endDate).toLocaleDateString()}
                         </strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ color: '#94a3b8' }}>⏰ Entry Deadline:</span>
-                        <strong style={{ color: '#f59e0b' }}>
+                        <span style={{ color: '#64748b' }}>⏰ Entry Deadline:</span>
+                        <strong style={{ color: '#b45309' }}>
                           {new Date(t.registrationDeadline).toLocaleDateString()}
                         </strong>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#94a3b8' }}>Slots Filled:</span>
-                        <strong style={{ color: '#38bdf8' }}>
+                        <span style={{ color: '#64748b' }}>Slots Filled:</span>
+                        <strong style={{ color: '#0284c7' }}>
                           {t.approvedTeamsCount} / {t.maxTeams} Teams Approved
                         </strong>
                       </div>
                     </div>
 
                     {t.rules && (
-                      <div style={{ fontSize: '12px', color: '#cbd5e1', marginBottom: 14 }}>
-                        <span style={{ color: '#64748b', display: 'block', textTransform: 'uppercase', fontSize: '11px' }}>
+                      <div style={{ fontSize: '12px', color: '#475569', marginBottom: 14 }}>
+                        <span style={{ color: '#64748b', display: 'block', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
                           Tournament Rules:
                         </span>
                         {t.rules}
@@ -509,7 +507,7 @@ export default function CaptainDashboard() {
                     )}
                   </div>
 
-                  <div style={{ borderTop: '1px solid #1e293b', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: '#64748b', fontSize: '12px' }}>
                       Org: {t.organizer?.organizationName || t.organizer?.name || 'Authorized Host'}
                     </span>
@@ -520,7 +518,6 @@ export default function CaptainDashboard() {
                       <button
                         onClick={() => {
                           setSelectedTournamentForApply(t);
-                          // Auto select matching team
                           const matchingTeams = teams.filter((tm) => tm.sport === t.sportCategory);
                           setSelectedTeamIdToApply(matchingTeams[0]?._id || '');
                         }}
@@ -548,32 +545,33 @@ export default function CaptainDashboard() {
       {/* TAB 3: MY APPLICATIONS */}
       {activeTab === 'applications' && (
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#f8fafc', marginBottom: 16 }}>
+          <h2 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 16 }}>
             📬 Submitted Tournament Applications
           </h2>
 
           {myApplications.length === 0 ? (
-            <div style={{ background: '#131b2e', border: '1px dashed #24324f', borderRadius: 12, padding: '40px', textAlign: 'center' }}>
-              <p style={{ color: '#94a3b8', fontSize: '15px' }}>
+            <div style={{ background: '#ffffff', border: '1px dashed #cbd5e1', borderRadius: 12, padding: '40px', textAlign: 'center' }}>
+              <p style={{ color: '#64748b', fontSize: '14px' }}>
                 You haven't applied to any tournaments yet. Switch to the "Explore Tournaments" tab to register your squad!
               </p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 20 }}>
               {myApplications.map((app, idx) => (
                 <div
                   key={idx}
                   style={{
-                    background: '#131b2e',
-                    border: '1px solid #24324f',
-                    borderRadius: 12,
-                    padding: 20,
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 10,
+                    padding: 22,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <div>
-                      <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>{app.tournamentTitle}</h3>
-                      <div style={{ color: '#38bdf8', fontSize: '13px' }}>
+                      <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{app.tournamentTitle}</h3>
+                      <div style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>
                         {app.sportCategory} • {app.district}
                       </div>
                     </div>
@@ -590,31 +588,31 @@ export default function CaptainDashboard() {
                     </span>
                   </div>
 
-                  <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 12 }}>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#94a3b8' }}>Registered Squad:</span>
-                      <strong style={{ color: '#fff' }}>{app.team?.name || 'Selected Team'}</strong>
+                      <span style={{ color: '#64748b' }}>Registered Squad:</span>
+                      <strong style={{ color: '#0f172a' }}>{app.team?.name || 'Selected Team'}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#94a3b8' }}>📍 Assigned Venue:</span>
-                      <strong style={{ color: '#cbd5e1' }}>{app.venueName}</strong>
+                      <span style={{ color: '#64748b' }}>📍 Assigned Venue:</span>
+                      <strong style={{ color: '#334155' }}>{app.venueName}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>📅 Tournament Dates:</span>
-                      <strong style={{ color: '#38bdf8' }}>
+                      <span style={{ color: '#64748b' }}>📅 Tournament Dates:</span>
+                      <strong style={{ color: '#0284c7' }}>
                         {new Date(app.startDate).toLocaleDateString()} – {new Date(app.endDate).toLocaleDateString()}
                       </strong>
                     </div>
                   </div>
 
                   {app.status === 'APPROVED' && (
-                    <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', padding: 10, borderRadius: 6, fontSize: '12px', color: '#34d399', marginBottom: 10 }}>
+                    <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', padding: 10, borderRadius: 6, fontSize: '12px', color: '#15803d', marginBottom: 10 }}>
                       🎉 Application Approved! Your team has been slotted into the tournament bracket.
                     </div>
                   )}
 
                   {app.status === 'REJECTED' && app.rejectionReason && (
-                    <div style={{ background: 'rgba(244, 63, 94, 0.1)', border: '1px solid #f43f5e', padding: 10, borderRadius: 6, fontSize: '12px', color: '#fb7185', marginBottom: 10 }}>
+                    <div style={{ background: '#fee2e2', border: '1px solid #fecaca', padding: 10, borderRadius: 6, fontSize: '12px', color: '#b91c1c', marginBottom: 10 }}>
                       Reason: {app.rejectionReason}
                     </div>
                   )}
@@ -633,12 +631,12 @@ export default function CaptainDashboard() {
       {showCreateTeamModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 16 }}>
               🛡️ Register New Team / Squad
             </h3>
-            <form onSubmit={handleCreateTeam} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <form onSubmit={handleCreateTeam} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Team Name</label>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Team Name</label>
                 <input
                   required
                   placeholder="e.g. Saurashtra Strikers FC"
@@ -650,7 +648,7 @@ export default function CaptainDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Sport Category</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Sport Category</label>
                   <select
                     value={sport}
                     onChange={(e) => setSport(e.target.value)}
@@ -664,7 +662,7 @@ export default function CaptainDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>District / City</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District / City</label>
                   <input
                     required
                     value={district}
@@ -678,13 +676,13 @@ export default function CaptainDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowCreateTeamModal(false)}
-                  style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 16px' }}
+                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 16px' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px' }}
+                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px', fontWeight: 600 }}
                 >
                   Save Team
                 </button>
@@ -698,20 +696,20 @@ export default function CaptainDashboard() {
       {selectedTournamentForApply && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: 12 }}>
+            <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 10 }}>
               🏆 Register Squad for {selectedTournamentForApply.title}
             </h3>
-            <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: 16 }}>
+            <p style={{ color: '#64748b', fontSize: '13px', marginBottom: 16 }}>
               Select which of your registered {selectedTournamentForApply.sportCategory} teams will participate.
             </p>
 
             <form onSubmit={handleApplyForTournament} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
                   Select Eligible Team ({selectedTournamentForApply.sportCategory})
                 </label>
                 {teams.filter((t) => t.sport === selectedTournamentForApply.sportCategory).length === 0 ? (
-                  <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#fca5a5', padding: 10, borderRadius: 6, fontSize: '13px' }}>
+                  <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: 10, borderRadius: 6, fontSize: '13px' }}>
                     ⚠️ You do not have any registered teams for {selectedTournamentForApply.sportCategory}. Please register a team in that sport first.
                   </div>
                 ) : (
@@ -734,7 +732,7 @@ export default function CaptainDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
                   Notes for Organizer (Optional)
                 </label>
                 <textarea
@@ -750,7 +748,7 @@ export default function CaptainDashboard() {
                 <button
                   type="button"
                   onClick={() => setSelectedTournamentForApply(null)}
-                  style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 16px' }}
+                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 16px' }}
                 >
                   Cancel
                 </button>
@@ -758,10 +756,11 @@ export default function CaptainDashboard() {
                   type="submit"
                   disabled={!selectedTeamIdToApply}
                   style={{
-                    background: !selectedTeamIdToApply ? '#475569' : '#0284c7',
+                    background: !selectedTeamIdToApply ? '#cbd5e1' : '#0284c7',
                     color: '#fff',
                     border: 'none',
                     padding: '8px 20px',
+                    fontWeight: 600,
                     cursor: !selectedTeamIdToApply ? 'not-allowed' : 'pointer',
                   }}
                 >

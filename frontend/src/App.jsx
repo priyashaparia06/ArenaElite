@@ -21,15 +21,16 @@ function Navbar() {
   return (
     <nav
       style={{
-        background: '#090d16',
-        borderBottom: '1px solid #24324f',
-        padding: '14px 24px',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
+        padding: '12px 24px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         position: 'sticky',
         top: 0,
         zIndex: 100,
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
       }}
     >
       {/* Brand */}
@@ -40,7 +41,7 @@ function Navbar() {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            color: '#38bdf8',
+            color: '#0284c7',
             textDecoration: 'none',
             fontWeight: 800,
             fontSize: '20px',
@@ -48,13 +49,13 @@ function Navbar() {
           }}
         >
           <span>🏆</span>
-          <span>ARENA<span style={{ color: '#fff' }}>ELITE</span></span>
+          <span>ARENA<span style={{ color: '#0f172a' }}>ELITE</span></span>
         </Link>
 
         <Link
           to="/"
           style={{
-            color: '#94a3b8',
+            color: '#475569',
             fontSize: '14px',
             fontWeight: 600,
             textDecoration: 'none',
@@ -65,14 +66,14 @@ function Navbar() {
       </div>
 
       {/* Role-Specific Navigation Links */}
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
         {user?.role === 'ADMIN' && (
           <Link
             to="/admin/dashboard"
             style={{
-              background: 'rgba(192, 132, 252, 0.15)',
-              border: '1px solid rgba(192, 132, 252, 0.3)',
-              color: '#c084fc',
+              background: '#f3e8ff',
+              border: '1px solid #e9d5ff',
+              color: '#7e22ce',
               padding: '6px 14px',
               borderRadius: 6,
               fontSize: '13px',
@@ -88,9 +89,9 @@ function Navbar() {
           <Link
             to="/organizer/dashboard"
             style={{
-              background: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-              color: '#38bdf8',
+              background: '#e0f2fe',
+              border: '1px solid #bae6fd',
+              color: '#0369a1',
               padding: '6px 14px',
               borderRadius: 6,
               fontSize: '13px',
@@ -106,9 +107,9 @@ function Navbar() {
           <Link
             to="/captain/dashboard"
             style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#34d399',
+              background: '#dcfce7',
+              border: '1px solid #bbf7d0',
+              color: '#15803d',
               padding: '6px 14px',
               borderRadius: 6,
               fontSize: '13px',
@@ -124,17 +125,17 @@ function Navbar() {
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 8 }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#f8fafc' }}>{user.name}</div>
-              <div style={{ fontSize: '11px', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>{user.name}</div>
+              <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 {user.role} {user.organizationName ? `• ${user.organizationName}` : ''}
               </div>
             </div>
             <button
               onClick={handleLogout}
               style={{
-                background: '#1e293b',
-                border: '1px solid #334155',
-                color: '#ef4444',
+                background: '#fee2e2',
+                border: '1px solid #fecaca',
+                color: '#b91c1c',
                 padding: '6px 12px',
                 borderRadius: 6,
                 fontSize: '12px',
@@ -150,7 +151,7 @@ function Navbar() {
             <Link
               to="/login"
               style={{
-                color: '#cbd5e1',
+                color: '#475569',
                 fontSize: '14px',
                 fontWeight: 600,
                 textDecoration: 'none',
@@ -194,8 +195,8 @@ export default function App() {
             path="/unauthorized"
             element={
               <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-                <h2 style={{ color: '#ef4444', fontSize: '24px' }}>⛔ 403 Forbidden</h2>
-                <p style={{ color: '#94a3b8', marginTop: 8 }}>
+                <h2 style={{ color: '#dc2626', fontSize: '24px' }}>⛔ 403 Forbidden</h2>
+                <p style={{ color: '#64748b', marginTop: 8 }}>
                   You do not have permission to view this section.
                 </p>
                 <Link to="/" style={{ display: 'inline-block', marginTop: 16 }}>
@@ -225,10 +226,10 @@ export default function App() {
             <Route
               path="/scorer/dashboard"
               element={
-                <div style={{ padding: '40px 24px', textAlign: 'center', maxWidth: 600, margin: '40px auto', background: '#131b2e', borderRadius: 16, border: '1px solid #24324f' }}>
+                <div style={{ padding: '40px 24px', textAlign: 'center', maxWidth: 600, margin: '40px auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
                   <span style={{ fontSize: '36px' }}>⏱️</span>
-                  <h2 style={{ color: '#38bdf8', marginTop: 12 }}>Field Scorer Console</h2>
-                  <p style={{ color: '#94a3b8', marginTop: 8 }}>
+                  <h2 style={{ color: '#0284c7', marginTop: 12 }}>Field Scorer Console</h2>
+                  <p style={{ color: '#64748b', marginTop: 8 }}>
                     Low-latency live scoring and match clock engine will activate when fixtures are scheduled.
                   </p>
                 </div>

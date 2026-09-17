@@ -28,36 +28,33 @@ export default function Login() {
     }
   };
 
-  const setDemoUser = (userEmail, userPass) => {
-    setEmail(userEmail);
-    setPassword(userPass);
-  };
-
   return (
-    <div style={{ maxWidth: 460, margin: '60px auto', padding: 24, width: '100%' }}>
+    <div style={{ maxWidth: 440, margin: '60px auto', padding: '0 20px', width: '100%' }}>
       <div
         style={{
-          background: '#131b2e',
-          border: '1px solid #24324f',
-          borderRadius: 16,
-          padding: 32,
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: 12,
+          padding: 36,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <span style={{ fontSize: '32px' }}>🏆</span>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#f8fafc', marginTop: 8 }}>Arena Elite Portal</h2>
-          <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: 4 }}>
-            Sign in to access your administrative, organizer, or team dashboard
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <span style={{ fontSize: '36px' }}>🏆</span>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a', marginTop: 10, marginBottom: 6 }}>
+            Sign In to Arena Elite
+          </h2>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>
+            Enter your email and password to access your portal
           </p>
         </div>
 
         {error && (
           <div
             style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid #ef4444',
-              color: '#fca5a5',
+              background: '#fee2e2',
+              border: '1px solid #fecaca',
+              color: '#b91c1c',
               padding: '12px 16px',
               borderRadius: 8,
               fontSize: '14px',
@@ -68,28 +65,32 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
-            <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Email Address</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              Email Address
+            </label>
             <input
               type="email"
-              placeholder="e.g. admin@arenaelite.com"
+              placeholder="e.g. name@example.com"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px' }}
+              style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Password</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              Password
+            </label>
             <input
               type="password"
               placeholder="••••••••"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px' }}
+              style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
             />
           </div>
 
@@ -99,61 +100,24 @@ export default function Login() {
             style={{
               padding: '12px',
               background: '#0284c7',
-              color: '#fff',
+              color: '#ffffff',
               border: 'none',
-              borderRadius: 8,
+              borderRadius: 6,
               fontWeight: 600,
               fontSize: '15px',
-              marginTop: 4,
+              marginTop: 6,
             }}
           >
             {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
 
-        <p style={{ marginTop: 20, textAlign: 'center', fontSize: '14px', color: '#94a3b8' }}>
+        <p style={{ marginTop: 24, textAlign: 'center', fontSize: '14px', color: '#64748b' }}>
           Don't have an account?{' '}
-          <Link to="/register" style={{ color: '#38bdf8', fontWeight: 600 }}>
+          <Link to="/register" style={{ color: '#0284c7', fontWeight: 600 }}>
             Register here
           </Link>
         </p>
-
-        {/* Demo Roles Quick Fill Buttons */}
-        <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #24324f' }}>
-          <div style={{ fontSize: '12px', color: '#64748b', textTransform: 'uppercase', marginBottom: 10, textAlign: 'center', fontWeight: 600 }}>
-            ⚡ Quick-Fill Demo Credentials
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <button
-              type="button"
-              onClick={() => setDemoUser('admin@arenaelite.com', 'Admin@123456')}
-              style={{ background: '#1e293b', border: '1px solid #334155', color: '#c084fc', padding: '8px', fontSize: '12px', borderRadius: 6 }}
-            >
-              🛡️ Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => setDemoUser('organizer@arenaelite.com', 'Organizer@123456')}
-              style={{ background: '#1e293b', border: '1px solid #334155', color: '#38bdf8', padding: '8px', fontSize: '12px', borderRadius: 6 }}
-            >
-              📋 Organizer (Active)
-            </button>
-            <button
-              type="button"
-              onClick={() => setDemoUser('captain@arenaelite.com', 'Captain@123456')}
-              style={{ background: '#1e293b', border: '1px solid #334155', color: '#34d399', padding: '8px', fontSize: '12px', borderRadius: 6 }}
-            >
-              ⚽ Team Captain
-            </button>
-            <button
-              type="button"
-              onClick={() => setDemoUser('pending.org@arenaelite.com', 'Pending@123456')}
-              style={{ background: '#1e293b', border: '1px solid #334155', color: '#fbbf24', padding: '8px', fontSize: '12px', borderRadius: 6 }}
-            >
-              ⏳ Pending Org (Test)
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

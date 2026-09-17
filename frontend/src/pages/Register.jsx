@@ -29,7 +29,7 @@ export default function Register() {
 
       if (form.role === 'ORGANIZER') {
         setSuccessMsg(
-          'Registration submitted! Because you registered as an Organizer, your account is awaiting Administrator approval before you can host events.'
+          'Registration submitted! Your organizer account is awaiting Administrator approval before you can host tournaments.'
         );
         setTimeout(() => navigate('/login'), 4000);
       } else {
@@ -44,22 +44,22 @@ export default function Register() {
   };
 
   return (
-    <div style={{ maxWidth: 480, margin: '40px auto', padding: 24, width: '100%' }}>
+    <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 20px', width: '100%' }}>
       <div
         style={{
-          background: '#131b2e',
-          border: '1px solid #24324f',
-          borderRadius: 16,
-          padding: 32,
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: 12,
+          padding: 36,
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <span style={{ fontSize: '32px' }}>📝</span>
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#f8fafc', marginTop: 8 }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <span style={{ fontSize: '36px' }}>📝</span>
+          <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a', marginTop: 10, marginBottom: 6 }}>
             Create Arena Elite Account
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: 4 }}>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>
             Join as a Team Captain, Tournament Organizer, or Field Scorer
           </p>
         </div>
@@ -67,9 +67,9 @@ export default function Register() {
         {error && (
           <div
             style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid #ef4444',
-              color: '#fca5a5',
+              background: '#fee2e2',
+              border: '1px solid #fecaca',
+              color: '#b91c1c',
               padding: '12px 16px',
               borderRadius: 8,
               fontSize: '14px',
@@ -83,9 +83,9 @@ export default function Register() {
         {successMsg && (
           <div
             style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid #10b981',
-              color: '#6ee7b7',
+              background: '#dcfce7',
+              border: '1px solid #bbf7d0',
+              color: '#15803d',
               padding: '12px 16px',
               borderRadius: 8,
               fontSize: '14px',
@@ -96,59 +96,69 @@ export default function Register() {
           </div>
         )}
 
-        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Full Name</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              Full Name
+            </label>
             <input
               placeholder="e.g. Rahul Sharma"
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              style={{ width: '100%' }}
+              style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Email Address</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              Email Address
+            </label>
             <input
               type="email"
               placeholder="rahul@example.com"
               required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              style={{ width: '100%' }}
+              style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
             />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
-              <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Phone</label>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+                Phone
+              </label>
               <input
                 placeholder="+91 98765 43210"
                 required
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                style={{ width: '100%' }}
+                style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
               />
             </div>
             <div>
-              <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>District / City</label>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+                District / City
+              </label>
               <input
                 placeholder="e.g. Rajkot, Boston"
                 required
                 value={form.district}
                 onChange={(e) => setForm({ ...form, district: e.target.value })}
-                style={{ width: '100%' }}
+                style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
               />
             </div>
           </div>
 
           <div>
-            <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Role on Platform</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              Role on Platform
+            </label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              style={{ width: '100%' }}
+              style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
             >
               <option value="CAPTAIN">⚽ Team Captain (Create squads & enter tournaments)</option>
               <option value="ORGANIZER">📋 Tournament Organizer (Host competitions)</option>
@@ -158,7 +168,7 @@ export default function Register() {
 
           {form.role === 'ORGANIZER' && (
             <div>
-              <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
                 Organization / Academy / Club Name
               </label>
               <input
@@ -166,16 +176,18 @@ export default function Register() {
                 required
                 value={form.organizationName}
                 onChange={(e) => setForm({ ...form, organizationName: e.target.value })}
-                style={{ width: '100%' }}
+                style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
               />
-              <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: 4, display: 'block' }}>
+              <span style={{ fontSize: '12px', color: '#b45309', marginTop: 4, display: 'block' }}>
                 * Organizer profiles require approval from the administrator before creating public tournaments.
               </span>
             </div>
           )}
 
           <div>
-            <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Password</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
+              Password
+            </label>
             <input
               type="password"
               placeholder="Minimum 6 characters"
@@ -183,7 +195,7 @@ export default function Register() {
               minLength={6}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              style={{ width: '100%' }}
+              style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
             />
           </div>
 
@@ -193,9 +205,9 @@ export default function Register() {
             style={{
               padding: '12px',
               background: '#0284c7',
-              color: '#fff',
+              color: '#ffffff',
               border: 'none',
-              borderRadius: 8,
+              borderRadius: 6,
               fontWeight: 600,
               fontSize: '15px',
               marginTop: 6,
@@ -205,9 +217,9 @@ export default function Register() {
           </button>
         </form>
 
-        <p style={{ marginTop: 20, textAlign: 'center', fontSize: '14px', color: '#94a3b8' }}>
+        <p style={{ marginTop: 24, textAlign: 'center', fontSize: '14px', color: '#64748b' }}>
           Already have an account?{' '}
-          <Link to="/login" style={{ color: '#38bdf8', fontWeight: 600 }}>
+          <Link to="/login" style={{ color: '#0284c7', fontWeight: 600 }}>
             Log in
           </Link>
         </p>

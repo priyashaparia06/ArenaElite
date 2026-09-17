@@ -175,20 +175,20 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+    <div style={{ padding: '28px 24px', maxWidth: '1300px', margin: '0 auto', width: '100%' }}>
       {/* Top Banner & Title */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: '#f8fafc', marginBottom: 4 }}>
+          <h1 style={{ fontSize: '26px', fontWeight: 'bold', color: '#0f172a', marginBottom: 4 }}>
             🛡️ System Administration Console
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '14px' }}>
+          <p style={{ color: '#64748b', fontSize: '14px' }}>
             Manage platform users, organizer approvals, sports category rules, and venues.
           </p>
         </div>
         <button
           onClick={fetchData}
-          style={{ background: '#1e293b', border: '1px solid #334155', color: '#38bdf8', padding: '8px 16px', borderRadius: 6 }}
+          style={{ background: '#ffffff', border: '1px solid #cbd5e1', color: '#0f172a', padding: '8px 16px', borderRadius: 6, fontSize: '13px', fontWeight: 600 }}
         >
           🔄 Refresh Data
         </button>
@@ -196,12 +196,12 @@ export default function AdminDashboard() {
 
       {/* Alert Notices */}
       {error && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#fca5a5', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+        <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '14px' }}>
           ⚠️ {error}
         </div>
       )}
       {success && (
-        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#6ee7b7', padding: '12px 16px', borderRadius: 8, marginBottom: 20 }}>
+        <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', color: '#15803d', padding: '12px 16px', borderRadius: 8, marginBottom: 20, fontSize: '14px' }}>
           ✅ {success}
         </div>
       )}
@@ -209,71 +209,69 @@ export default function AdminDashboard() {
       {/* Quick Stats Grid */}
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
-          <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Total Registered Users</span>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#38bdf8', marginTop: 4 }}>{stats.totalUsers}</div>
-            <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>Across all 4 roles</div>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Total Users</span>
+            <div style={{ fontSize: '26px', fontWeight: 'bold', color: '#0f172a', marginTop: 4 }}>{stats.totalUsers}</div>
+            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>Across all 4 roles</div>
           </div>
-          <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Pending Organizers</span>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: stats.organizers.pending > 0 ? '#f59e0b' : '#10b981', marginTop: 4 }}>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Pending Organizers</span>
+            <div style={{ fontSize: '26px', fontWeight: 'bold', color: stats.organizers.pending > 0 ? '#b45309' : '#16a34a', marginTop: 4 }}>
               {stats.organizers.pending}
             </div>
-            <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>{stats.organizers.approved} Approved</div>
+            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>{stats.organizers.approved} Approved</div>
           </div>
-          <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Active Tournaments</span>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#10b981', marginTop: 4 }}>{stats.tournaments.active}</div>
-            <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>{stats.tournaments.total} Total Tournaments</div>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Active Tournaments</span>
+            <div style={{ fontSize: '26px', fontWeight: 'bold', color: '#0284c7', marginTop: 4 }}>{stats.tournaments.active}</div>
+            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>{stats.tournaments.total} Total Tournaments</div>
           </div>
-          <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Grounds & Venues</span>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#a855f7', marginTop: 4 }}>{stats.totalVenues}</div>
-            <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>Across multiple districts</div>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Grounds & Venues</span>
+            <div style={{ fontSize: '26px', fontWeight: 'bold', color: '#7e22ce', marginTop: 4 }}>{stats.totalVenues}</div>
+            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>Across multiple districts</div>
           </div>
-          <div style={{ background: '#131b2e', border: '1px solid #24324f', padding: '16px', borderRadius: 12 }}>
-            <span style={{ color: '#94a3b8', fontSize: '13px' }}>Sports Categories</span>
-            <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#f43f5e', marginTop: 4 }}>{stats.totalSports}</div>
-            <div style={{ color: '#64748b', fontSize: '12px', marginTop: 4 }}>Configured with match rules</div>
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', padding: '18px', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Sports Categories</span>
+            <div style={{ fontSize: '26px', fontWeight: 'bold', color: '#0f172a', marginTop: 4 }}>{stats.totalSports}</div>
+            <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: 4 }}>Configured with rules</div>
           </div>
         </div>
       )}
 
-      {/* Pending Organizer Attention Banner */}
+      {/* Pending Organizer Banner */}
       {pendingOrganizers.length > 0 && (
-        <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', borderRadius: 12, padding: '16px 20px', marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: '20px' }}>⏳</span>
-              <div>
-                <h3 style={{ color: '#fbbf24', fontSize: '16px', fontWeight: 600 }}>
-                  {pendingOrganizers.length} Organizer Application(s) Awaiting Review
-                </h3>
-                <p style={{ color: '#cbd5e1', fontSize: '13px' }}>
-                  These organizations cannot host tournaments until you approve their credentials.
-                </p>
-              </div>
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '16px 20px', marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <span style={{ fontSize: '20px' }}>⏳</span>
+            <div>
+              <h3 style={{ color: '#92400e', fontSize: '15px', fontWeight: 600 }}>
+                {pendingOrganizers.length} Organizer Application(s) Awaiting Review
+              </h3>
+              <p style={{ color: '#78350f', fontSize: '13px' }}>
+                These organizations cannot host tournaments until you approve their credentials.
+              </p>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
             {pendingOrganizers.map((org) => (
-              <div key={org._id} style={{ background: '#182238', padding: '12px 16px', borderRadius: 8, border: '1px solid #334155' }}>
+              <div key={org._id} style={{ background: '#ffffff', padding: '14px 16px', borderRadius: 8, border: '1px solid #fef3c7', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <h4 style={{ color: '#fff', fontSize: '15px' }}>{org.organizationName || org.name}</h4>
-                    <div style={{ color: '#94a3b8', fontSize: '13px' }}>Contact: {org.name} ({org.email})</div>
-                    <div style={{ color: '#64748b', fontSize: '12px' }}>District: {org.district} | Phone: {org.phone}</div>
+                    <h4 style={{ color: '#0f172a', fontSize: '15px', fontWeight: 600 }}>{org.organizationName || org.name}</h4>
+                    <div style={{ color: '#475569', fontSize: '13px', marginTop: 2 }}>Contact: {org.name} ({org.email})</div>
+                    <div style={{ color: '#64748b', fontSize: '12px', marginTop: 2 }}>District: {org.district} | Phone: {org.phone}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={() => handleUpdateOrganizerStatus(org._id, 'APPROVED')}
-                      style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: '12px' }}
+                      style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: '12px', fontWeight: 600 }}
                     >
                       Approve
                     </button>
                     <button
                       onClick={() => handleUpdateOrganizerStatus(org._id, 'REJECTED')}
-                      style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: '12px' }}
+                      style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: 4, fontSize: '12px', fontWeight: 600 }}
                     >
                       Reject
                     </button>
@@ -286,7 +284,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Main Tab Navigation */}
-      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #24324f', marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid #e2e8f0', marginBottom: 24 }}>
         {[
           { id: 'users', label: '👥 Users & Organizers' },
           { id: 'sports', label: '🏆 Sports Categories & Rules' },
@@ -296,12 +294,12 @@ export default function AdminDashboard() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
-              background: activeTab === tab.id ? '#1e293b' : 'transparent',
-              color: activeTab === tab.id ? '#38bdf8' : '#94a3b8',
+              background: 'transparent',
+              color: activeTab === tab.id ? '#0284c7' : '#64748b',
               border: 'none',
-              borderBottom: activeTab === tab.id ? '2px solid #38bdf8' : '2px solid transparent',
-              padding: '10px 20px',
-              fontSize: '15px',
+              borderBottom: activeTab === tab.id ? '2px solid #0284c7' : '2px solid transparent',
+              padding: '10px 18px',
+              fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -313,7 +311,7 @@ export default function AdminDashboard() {
 
       {/* TAB 1: USERS & ORGANIZERS */}
       {activeTab === 'users' && (
-        <div style={{ background: '#131b2e', border: '1px solid #24324f', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 10, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           {/* Controls Bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -321,7 +319,7 @@ export default function AdminDashboard() {
                 placeholder="Search user, org, district, or email..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                style={{ width: '320px' }}
+                style={{ width: '300px' }}
               />
               <select
                 value={userRoleFilter}
@@ -335,7 +333,7 @@ export default function AdminDashboard() {
                 <option value="ADMIN">Admins</option>
               </select>
             </div>
-            <div style={{ color: '#94a3b8', fontSize: '14px', alignSelf: 'center' }}>
+            <div style={{ color: '#64748b', fontSize: '13px', alignSelf: 'center' }}>
               Showing {filteredUsers.length} user accounts
             </div>
           </div>
@@ -344,23 +342,23 @@ export default function AdminDashboard() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid #24324f', color: '#94a3b8' }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569' }}>
                   <th style={{ padding: '12px 16px' }}>User / Organization</th>
                   <th style={{ padding: '12px 16px' }}>Role</th>
                   <th style={{ padding: '12px 16px' }}>District</th>
                   <th style={{ padding: '12px 16px' }}>Contact</th>
-                  <th style={{ padding: '12px 16px' }}>Approval Status</th>
+                  <th style={{ padding: '12px 16px' }}>Status</th>
                   <th style={{ padding: '12px 16px' }}>Active</th>
                   <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((u) => (
-                  <tr key={u._id} style={{ borderBottom: '1px solid #1e293b' }}>
+                  <tr key={u._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontWeight: 600, color: '#f8fafc' }}>{u.name}</div>
+                      <div style={{ fontWeight: 600, color: '#0f172a' }}>{u.name}</div>
                       {u.organizationName && (
-                        <div style={{ color: '#38bdf8', fontSize: '12px' }}>🏢 {u.organizationName}</div>
+                        <div style={{ color: '#0284c7', fontSize: '12px' }}>🏢 {u.organizationName}</div>
                       )}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -378,9 +376,9 @@ export default function AdminDashboard() {
                         {u.role}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', color: '#cbd5e1' }}>{u.district}</td>
+                    <td style={{ padding: '12px 16px', color: '#475569' }}>{u.district}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ color: '#e2e8f0' }}>{u.email}</div>
+                      <div style={{ color: '#0f172a' }}>{u.email}</div>
                       <div style={{ color: '#64748b', fontSize: '12px' }}>{u.phone}</div>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
@@ -400,21 +398,23 @@ export default function AdminDashboard() {
                       <span
                         style={{
                           display: 'inline-block',
-                          width: 10,
-                          height: 10,
+                          width: 8,
+                          height: 8,
                           borderRadius: '50%',
-                          background: u.isActive ? '#10b981' : '#ef4444',
+                          background: u.isActive ? '#16a34a' : '#dc2626',
                           marginRight: 6,
                         }}
                       />
-                      {u.isActive ? 'Active' : 'Disabled'}
+                      <span style={{ color: u.isActive ? '#16a34a' : '#dc2626', fontSize: '13px', fontWeight: 500 }}>
+                        {u.isActive ? 'Active' : 'Disabled'}
+                      </span>
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                         {u.role === 'ORGANIZER' && u.approvalStatus !== 'APPROVED' && (
                           <button
                             onClick={() => handleUpdateOrganizerStatus(u._id, 'APPROVED')}
-                            style={{ background: '#10b981', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: 4, fontSize: '12px' }}
+                            style={{ background: '#16a34a', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: 4, fontSize: '12px', fontWeight: 500 }}
                           >
                             Approve
                           </button>
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
                         {u.role === 'ORGANIZER' && u.approvalStatus === 'APPROVED' && (
                           <button
                             onClick={() => handleUpdateOrganizerStatus(u._id, 'REJECTED')}
-                            style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: 4, fontSize: '12px' }}
+                            style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: 4, fontSize: '12px', fontWeight: 500 }}
                           >
                             Revoke
                           </button>
@@ -431,9 +431,9 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => handleToggleUserActive(u._id)}
                             style={{
-                              background: u.isActive ? '#334155' : '#0284c7',
-                              color: '#fff',
-                              border: 'none',
+                              background: '#f8fafc',
+                              color: '#475569',
+                              border: '1px solid #cbd5e1',
                               padding: '4px 8px',
                               borderRadius: 4,
                               fontSize: '12px',
@@ -457,59 +457,60 @@ export default function AdminDashboard() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
-              <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f8fafc' }}>Sport Disciplines & Match Rules</h2>
-              <p style={{ color: '#94a3b8', fontSize: '14px' }}>
+              <h2 style={{ fontSize: '19px', fontWeight: 600, color: '#0f172a' }}>Sport Disciplines & Match Rules</h2>
+              <p style={{ color: '#64748b', fontSize: '13px' }}>
                 Define team sizes, squad limits, match durations, and sport-specific rules used across tournaments.
               </p>
             </div>
             <button
               onClick={() => setShowSportModal(true)}
-              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 6, fontWeight: 600 }}
+              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 6, fontWeight: 600, fontSize: '13px' }}
             >
               + Add Sport Category
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 18 }}>
             {sports.map((sport) => (
               <div
                 key={sport._id}
                 style={{
-                  background: '#131b2e',
-                  border: '1px solid #24324f',
-                  borderRadius: 12,
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 10,
                   padding: 20,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: '28px' }}>{sport.icon || '🏆'}</span>
+                      <span style={{ fontSize: '26px' }}>{sport.icon || '🏆'}</span>
                       <div>
-                        <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>{sport.name}</h3>
-                        <span style={{ color: '#38bdf8', fontSize: '12px', fontWeight: 600 }}>{sport.code}</span>
+                        <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{sport.name}</h3>
+                        <span style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>{sport.code}</span>
                       </div>
                     </div>
                     <span className="badge badge-blue">{sport.formatType}</span>
                   </div>
 
-                  <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, marginBottom: 14, fontSize: '13px' }}>
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 6, marginBottom: 14, fontSize: '13px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#94a3b8' }}>Playing Team Size:</span>
-                      <strong style={{ color: '#fff' }}>{sport.playersPerTeam} on court/field</strong>
+                      <span style={{ color: '#64748b' }}>Playing Team Size:</span>
+                      <strong style={{ color: '#0f172a' }}>{sport.playersPerTeam} on court/field</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#94a3b8' }}>Squad Roster Limits:</span>
-                      <strong style={{ color: '#fff' }}>
+                      <span style={{ color: '#64748b' }}>Squad Roster Limits:</span>
+                      <strong style={{ color: '#0f172a' }}>
                         Min {sport.minSquadSize} – Max {sport.maxSquadSize}
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#94a3b8' }}>Standard Match Length:</span>
-                      <strong style={{ color: '#38bdf8' }}>
+                      <span style={{ color: '#64748b' }}>Standard Match Length:</span>
+                      <strong style={{ color: '#0284c7' }}>
                         {sport.formatType === 'OVERS_BASED'
                           ? `${sport.defaultMatchDuration} Overs`
                           : sport.formatType === 'SETS_BASED'
@@ -519,18 +520,18 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div style={{ fontSize: '13px', color: '#cbd5e1', marginBottom: 16 }}>
-                    <span style={{ color: '#94a3b8', display: 'block', fontSize: '11px', textTransform: 'uppercase', marginBottom: 2 }}>
+                  <div style={{ fontSize: '13px', color: '#475569', marginBottom: 16 }}>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '11px', textTransform: 'uppercase', marginBottom: 2, fontWeight: 600 }}>
                       Official Rulebook Configuration:
                     </span>
                     {sport.rulesDescription || 'Standard international sporting regulations apply.'}
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid #1e293b', paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => handleDeleteSport(sport._id)}
-                    style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 10px', borderRadius: 4, fontSize: '12px' }}
+                    style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: '4px 10px', borderRadius: 4, fontSize: '12px', fontWeight: 500 }}
                   >
                     Delete Category
                   </button>
@@ -546,46 +547,47 @@ export default function AdminDashboard() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
-              <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f8fafc' }}>Sports Grounds & Venues</h2>
-              <p style={{ color: '#94a3b8', fontSize: '14px' }}>
+              <h2 style={{ fontSize: '19px', fontWeight: 600, color: '#0f172a' }}>Sports Grounds & Venues</h2>
+              <p style={{ color: '#64748b', fontSize: '13px' }}>
                 Manage verified stadiums, college grounds, and indoor arenas available for organizers.
               </p>
             </div>
             <button
               onClick={() => setShowVenueModal(true)}
-              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 18px', borderRadius: 6, fontWeight: 600 }}
+              style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 6, fontWeight: 600, fontSize: '13px' }}
             >
               + Add Ground / Venue
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 18 }}>
             {venues.map((venue) => (
               <div
                 key={venue._id}
                 style={{
-                  background: '#131b2e',
-                  border: '1px solid #24324f',
-                  borderRadius: 12,
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 10,
                   padding: 20,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div>
-                      <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>{venue.name}</h3>
-                      <div style={{ color: '#38bdf8', fontSize: '13px' }}>📍 {venue.district}</div>
+                      <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{venue.name}</h3>
+                      <div style={{ color: '#0284c7', fontSize: '13px' }}>📍 {venue.district}</div>
                     </div>
                     <span className="badge badge-green">Verified</span>
                   </div>
 
-                  <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: 14 }}>{venue.address}</p>
+                  <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14 }}>{venue.address}</p>
 
                   <div style={{ marginBottom: 12 }}>
-                    <span style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
+                    <span style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: 4, fontWeight: 600 }}>
                       Supported Sports:
                     </span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -599,7 +601,7 @@ export default function AdminDashboard() {
 
                   {venue.facilities && venue.facilities.length > 0 && (
                     <div style={{ marginBottom: 14 }}>
-                      <span style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>
+                      <span style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: 4, fontWeight: 600 }}>
                         Facilities:
                       </span>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -607,12 +609,12 @@ export default function AdminDashboard() {
                           <span
                             key={i}
                             style={{
-                              background: '#0f172a',
-                              color: '#cbd5e1',
+                              background: '#f8fafc',
+                              color: '#334155',
                               padding: '2px 8px',
                               borderRadius: 4,
                               fontSize: '11px',
-                              border: '1px solid #24324f',
+                              border: '1px solid #e2e8f0',
                             }}
                           >
                             ✓ {fac}
@@ -622,16 +624,16 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  <div style={{ background: '#0f172a', padding: 10, borderRadius: 8, fontSize: '12px', color: '#94a3b8' }}>
+                  <div style={{ background: '#f8fafc', padding: 10, borderRadius: 6, fontSize: '12px', color: '#64748b', border: '1px solid #e2e8f0' }}>
                     <div>Manager: {venue.contactPerson || 'Official In-charge'}</div>
                     <div>Phone: {venue.contactPhone || 'N/A'}</div>
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px solid #1e293b', paddingTop: 12, marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => handleDeleteVenue(venue._id)}
-                    style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '4px 10px', borderRadius: 4, fontSize: '12px' }}
+                    style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: '4px 10px', borderRadius: 4, fontSize: '12px', fontWeight: 500 }}
                   >
                     Remove Ground
                   </button>
@@ -646,13 +648,13 @@ export default function AdminDashboard() {
       {showSportModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 16 }}>
               🏆 Configure New Sport Category & Rules
             </h3>
-            <form onSubmit={handleCreateSport} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <form onSubmit={handleCreateSport} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Sport Name</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Sport Name</label>
                   <input
                     placeholder="e.g. Football, Cricket"
                     required
@@ -662,7 +664,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Code (Uppercase)</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Code (Uppercase)</label>
                   <input
                     placeholder="e.g. FOOTBALL"
                     required
@@ -675,7 +677,7 @@ export default function AdminDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Emoji / Icon</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Emoji / Icon</label>
                   <input
                     placeholder="⚽, 🏏, 🏀"
                     value={sportForm.icon}
@@ -684,7 +686,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Format Type</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Format Type</label>
                   <select
                     value={sportForm.formatType}
                     onChange={(e) => setSportForm({ ...sportForm, formatType: e.target.value })}
@@ -700,7 +702,7 @@ export default function AdminDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Playing Team Size</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Playing Team Size</label>
                   <input
                     type="number"
                     min="1"
@@ -711,7 +713,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Min Squad Size</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Min Squad Size</label>
                   <input
                     type="number"
                     min="1"
@@ -722,7 +724,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Max Squad Size</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Max Squad Size</label>
                   <input
                     type="number"
                     min="1"
@@ -735,7 +737,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
                   Default Match Duration (Mins / Overs / Sets)
                 </label>
                 <input
@@ -749,7 +751,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Official Rule Descriptions</label>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Official Rule Descriptions</label>
                 <textarea
                   rows="3"
                   placeholder="Specify substitutions, timing halves, shootout formats..."
@@ -763,13 +765,13 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowSportModal(false)}
-                  style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 16px' }}
+                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 16px' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px' }}
+                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px', fontWeight: 600 }}
                 >
                   Save Sport Category
                 </button>
@@ -783,13 +785,13 @@ export default function AdminDashboard() {
       {showVenueModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 16 }}>
               🏟️ Register Sports Ground / Venue
             </h3>
-            <form onSubmit={handleCreateVenue} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <form onSubmit={handleCreateVenue} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Ground / Arena Name</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Ground / Arena Name</label>
                   <input
                     placeholder="e.g. City Sports Complex"
                     required
@@ -799,7 +801,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>District / City</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District / City</label>
                   <input
                     placeholder="e.g. Rajkot, Boston"
                     required
@@ -811,7 +813,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Full Address</label>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Full Address</label>
                 <input
                   placeholder="Street address, landmarks..."
                   required
@@ -822,7 +824,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
                   Supported Sports (comma separated)
                 </label>
                 <input
@@ -836,7 +838,7 @@ export default function AdminDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Contact Person</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Contact Person</label>
                   <input
                     placeholder="Ground manager name"
                     value={venueForm.contactPerson}
@@ -845,7 +847,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Contact Phone</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Contact Phone</label>
                   <input
                     placeholder="+91 98765 43210"
                     value={venueForm.contactPhone}
@@ -856,7 +858,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label style={{ fontSize: '13px', color: '#94a3b8', display: 'block', marginBottom: 4 }}>
+                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
                   Facilities (comma separated)
                 </label>
                 <input
@@ -871,13 +873,13 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowVenueModal(false)}
-                  style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 16px' }}
+                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 16px' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px' }}
+                  style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 20px', fontWeight: 600 }}
                 >
                   Save Venue
                 </button>
