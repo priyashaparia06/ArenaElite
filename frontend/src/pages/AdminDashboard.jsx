@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/axios';
+import SearchableCitySelect from '../components/SearchableCitySelect';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('users');
@@ -801,13 +802,12 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District / City</label>
-                  <input
-                    placeholder="e.g. Rajkot, Boston"
-                    required
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District / City (Gujarat)</label>
+                  <SearchableCitySelect
                     value={venueForm.district}
                     onChange={(e) => setVenueForm({ ...venueForm, district: e.target.value })}
-                    style={{ width: '100%' }}
+                    placeholder="Select Gujarat city..."
+                    required
                   />
                 </div>
               </div>

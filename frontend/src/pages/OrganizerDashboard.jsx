@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import API from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
+import SearchableCitySelect from '../components/SearchableCitySelect';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 
 export default function OrganizerDashboard() {
   const { user } = useContext(AuthContext);
@@ -64,12 +66,24 @@ export default function OrganizerDashboard() {
     e.preventDefault();
     try {
       setError('');
-      const selectedVenueObj = venues.find((v) => v._id === formData.venueId);
-      const venueNameToUse = selectedVenueObj ? selectedVenueObj.name : formData.venueName;
+      if (!formData.venueId) {
+        setError('Please select a verified ground or choose "Other" to enter a custom venue name');
+        return;
+      }
+      if (formData.venueId === 'OTHER' && !formData.venueName.trim()) {
+        setError('Please enter the custom venue name');
+        return;
+      }
+
+      const isOther = formData.venueId === 'OTHER';
+      const selectedVenueObj = isOther ? null : venues.find((v) => v._id === formData.venueId);
+      const finalVenueId = isOther ? null : (selectedVenueObj ? selectedVenueObj._id : null);
+      const finalVenueName = isOther ? formData.venueName.trim() : (selectedVenueObj ? selectedVenueObj.name : '');
 
       await API.post('/tournaments', {
         ...formData,
-        venueName: venueNameToUse,
+        venueId: finalVenueId,
+        venueName: finalVenueName,
       });
 
       setSuccess(`Tournament "${formData.title}" published successfully!`);
@@ -232,6 +246,11 @@ export default function OrganizerDashboard() {
             const approvedTeams = t.registeredTeams?.filter((r) => r.status === 'APPROVED') || [];
             const pendingTeams = t.registeredTeams?.filter((r) => r.status === 'PENDING') || [];
             const sportInfo = sports.find((s) => s.code === t.sportCategory);
+            const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
+            const isSlotsFull = approvedTeams.length >= t.maxTeams;
+            const effectiveStatus = (t.status === 'REGISTRATION_OPEN' && (isDeadlinePassed || isSlotsFull))
+              ? 'REGISTRATION_CLOSED'
+              : t.status;
 
             return (
               <div
@@ -256,7 +275,23 @@ export default function OrganizerDashboard() {
                         <span style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>{t.sportCategory}</span>
                       </div>
                     </div>
-                    <span className="badge badge-green">{t.status.replace('_', ' ')}</span>
+                    <span
+                      className={`badge ${
+                        effectiveStatus === 'REGISTRATION_OPEN'
+                          ? 'badge-green'
+                          : effectiveStatus === 'REGISTRATION_CLOSED'
+                          ? 'badge-amber'
+                          : effectiveStatus === 'ONGOING'
+                          ? 'badge-blue'
+                          : 'badge-purple'
+                      }`}
+                    >
+                      {effectiveStatus === 'REGISTRATION_OPEN'
+                        ? 'Registration Open'
+                        : effectiveStatus === 'REGISTRATION_CLOSED'
+                        ? (isDeadlinePassed ? 'Registration Closed (Deadline Passed)' : isSlotsFull ? 'Registration Closed (Slots Full)' : 'Registration Closed')
+                        : effectiveStatus.replace('_', ' ')}
+                    </span>
                   </div>
 
                   <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14 }}>
@@ -271,13 +306,13 @@ export default function OrganizerDashboard() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                       <span style={{ color: '#64748b' }}>📅 Event Dates:</span>
                       <strong style={{ color: '#334155' }}>
-                        {new Date(t.startDate).toLocaleDateString()} – {new Date(t.endDate).toLocaleDateString()}
+                        {formatDate(t.startDate)} – {formatDate(t.endDate)}
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                       <span style={{ color: '#64748b' }}>⏰ Registration Deadline:</span>
-                      <strong style={{ color: '#b45309' }}>
-                        {new Date(t.registrationDeadline).toLocaleDateString()}
+                      <strong style={{ color: isDeadlinePassed ? '#dc2626' : '#b45309' }}>
+                        {formatDate(t.registrationDeadline)} {isDeadlinePassed ? '(Passed)' : ''}
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -380,13 +415,12 @@ export default function OrganizerDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District</label>
-                  <input
-                    placeholder="e.g. Rajkot, Boston"
-                    required
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District / City (Gujarat)</label>
+                  <SearchableCitySelect
                     value={formData.district}
                     onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                    style={{ width: '100%' }}
+                    placeholder="Select Gujarat city..."
+                    required
                   />
                 </div>
               </div>
@@ -397,14 +431,33 @@ export default function OrganizerDashboard() {
                     Venue / Ground (Verified Grounds)
                   </label>
                   <select
+                    required
                     value={formData.venueId}
                     onChange={(e) => {
-                      const vObj = venues.find((v) => v._id === e.target.value);
-                      setFormData({
-                        ...formData,
-                        venueId: e.target.value,
-                        venueName: vObj ? vObj.name : formData.venueName,
-                      });
+                      const selectedVal = e.target.value;
+                      if (selectedVal === 'OTHER') {
+                        // User selected "Other": enable custom venue input, clear previous venueName
+                        setFormData({
+                          ...formData,
+                          venueId: 'OTHER',
+                          venueName: '',
+                        });
+                      } else if (selectedVal) {
+                        // Verified ground selected: clear custom venue input and use verified ground name
+                        const vObj = venues.find((v) => v._id === selectedVal);
+                        setFormData({
+                          ...formData,
+                          venueId: selectedVal,
+                          venueName: vObj ? vObj.name : '',
+                        });
+                      } else {
+                        // Empty selection: clear both
+                        setFormData({
+                          ...formData,
+                          venueId: '',
+                          venueName: '',
+                        });
+                      }
                     }}
                     style={{ width: '100%' }}
                   >
@@ -414,6 +467,7 @@ export default function OrganizerDashboard() {
                         {v.name} ({v.district})
                       </option>
                     ))}
+                    <option value="OTHER">Other (Specify custom venue below)</option>
                   </select>
                 </div>
                 <div>
@@ -421,18 +475,35 @@ export default function OrganizerDashboard() {
                     Custom Venue Name (if not in list)
                   </label>
                   <input
-                    placeholder="Ground / Stadium Name"
-                    required
-                    value={formData.venueName}
-                    onChange={(e) => setFormData({ ...formData, venueName: e.target.value })}
-                    style={{ width: '100%' }}
+                    placeholder={
+                      formData.venueId === 'OTHER'
+                        ? 'Enter custom ground or venue name...'
+                        : "Disabled (Select 'Other' in dropdown above)"
+                    }
+                    disabled={formData.venueId !== 'OTHER'}
+                    required={formData.venueId === 'OTHER'}
+                    value={formData.venueId === 'OTHER' ? formData.venueName : ''}
+                    onChange={(e) => {
+                      if (formData.venueId === 'OTHER') {
+                        setFormData({ ...formData, venueName: e.target.value });
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      background: formData.venueId === 'OTHER' ? '#ffffff' : '#f1f5f9',
+                      color: formData.venueId === 'OTHER' ? '#0f172a' : '#94a3b8',
+                      cursor: formData.venueId === 'OTHER' ? 'text' : 'not-allowed',
+                      border: '1px solid #cbd5e1',
+                    }}
                   />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Start Date</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
+                    Start Date {formData.startDate && <span style={{ color: '#0284c7', fontWeight: 'normal' }}>({formatDate(formData.startDate)})</span>}
+                  </label>
                   <input
                     type="date"
                     required
@@ -442,7 +513,9 @@ export default function OrganizerDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>End Date</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
+                    End Date {formData.endDate && <span style={{ color: '#0284c7', fontWeight: 'normal' }}>({formatDate(formData.endDate)})</span>}
+                  </label>
                   <input
                     type="date"
                     required
@@ -452,7 +525,9 @@ export default function OrganizerDashboard() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>Reg Deadline</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
+                    Reg Deadline {formData.registrationDeadline && <span style={{ color: '#0284c7', fontWeight: 'normal' }}>({formatDate(formData.registrationDeadline)})</span>}
+                  </label>
                   <input
                     type="date"
                     required
@@ -585,7 +660,7 @@ export default function OrganizerDashboard() {
                             Captain: <strong style={{ color: '#0f172a' }}>{team.captainId?.name || reg.appliedBy?.name}</strong> | Phone: {team.captainId?.phone || reg.appliedBy?.phone} | District: {team.district}
                           </div>
                           <div style={{ color: '#64748b', fontSize: '12px', marginTop: 2 }}>
-                            Registered: {new Date(reg.appliedAt).toLocaleString()} • {team.players?.length || 0} Players in Roster
+                            Registered: {formatDateTime(reg.appliedAt)} • {team.players?.length || 0} Players in Roster
                           </div>
                         </div>
 
@@ -649,7 +724,14 @@ export default function OrganizerDashboard() {
                                       <td style={{ padding: '6px 10px', color: '#b45309', fontWeight: 'bold' }}>
                                         #{p.jerseyNumber}
                                       </td>
-                                      <td style={{ padding: '6px 10px', color: '#0f172a' }}>{p.fullName}</td>
+                                      <td style={{ padding: '6px 10px', color: '#0f172a' }}>
+                                        {p.fullName}
+                                        {(p.isCaptain || p.role?.toLowerCase() === 'captain') && (
+                                          <span className="badge badge-approved" style={{ marginLeft: 6, fontSize: '10px' }}>
+                                            👑 Captain
+                                          </span>
+                                        )}
+                                      </td>
                                       <td style={{ padding: '6px 10px', color: '#475569' }}>{p.role}</td>
                                       <td style={{ padding: '6px 10px', color: '#64748b', fontFamily: 'monospace' }}>
                                         {p.studentOrGovtId}

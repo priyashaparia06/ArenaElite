@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import SearchableCitySelect from '../components/SearchableCitySelect';
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -139,14 +140,13 @@ export default function Register() {
             </div>
             <div>
               <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 6 }}>
-                District / City
+                District / City (Gujarat)
               </label>
-              <input
-                placeholder="e.g. Rajkot, Boston"
-                required
+              <SearchableCitySelect
                 value={form.district}
                 onChange={(e) => setForm({ ...form, district: e.target.value })}
-                style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
+                placeholder="Search Gujarat city..."
+                required
               />
             </div>
           </div>

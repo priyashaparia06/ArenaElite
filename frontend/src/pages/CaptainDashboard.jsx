@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import API from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
+import SearchableCitySelect from '../components/SearchableCitySelect';
+import { getRolesForSport } from '../constants/sportRoles';
+import { formatDate, formatDateTime } from '../utils/dateUtils';
 
 export default function CaptainDashboard() {
   const { user } = useContext(AuthContext);
@@ -35,6 +38,7 @@ export default function CaptainDashboard() {
   const [selectedTournamentForApply, setSelectedTournamentForApply] = useState(null);
   const [selectedTeamIdToApply, setSelectedTeamIdToApply] = useState('');
   const [applyNotes, setApplyNotes] = useState('');
+  const [applyModalError, setApplyModalError] = useState('');
 
   // Applications State
   const [myApplications, setMyApplications] = useState([]);
@@ -75,6 +79,17 @@ export default function CaptainDashboard() {
     fetchInitialData();
   }, []);
 
+  // Keep playerForm role in sync with selected team's sport
+  useEffect(() => {
+    if (selectedTeam?.sport) {
+      const roles = getRolesForSport(selectedTeam.sport);
+      setPlayerForm((prev) => ({
+        ...prev,
+        role: prev.role && roles.includes(prev.role) ? prev.role : (roles[0] || ''),
+      }));
+    }
+  }, [selectedTeam?._id, selectedTeam?.sport]);
+
   const handleCreateTeam = async (e) => {
     e.preventDefault();
     setError('');
@@ -109,9 +124,19 @@ export default function CaptainDashboard() {
     setError('');
     setSuccess('');
     try {
-      await API.post(`/teams/${selectedTeam._id}/players`, playerForm);
+      const roles = getRolesForSport(selectedTeam.sport);
+      const payload = {
+        ...playerForm,
+        role: playerForm.role || roles[0] || 'Player',
+      };
+      await API.post(`/teams/${selectedTeam._id}/players`, payload);
       setSuccess(`Player #${playerForm.jerseyNumber} ${playerForm.fullName} added to squad!`);
-      setPlayerForm({ fullName: '', jerseyNumber: '', role: '', studentOrGovtId: '' });
+      setPlayerForm({
+        fullName: '',
+        jerseyNumber: '',
+        role: roles[0] || '',
+        studentOrGovtId: '',
+      });
       await fetchInitialData();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add player');
@@ -131,9 +156,23 @@ export default function CaptainDashboard() {
 
   const handleApplyForTournament = async (e) => {
     e.preventDefault();
-    if (!selectedTournamentForApply || !selectedTeamIdToApply) return;
-    setError('');
-    setSuccess('');
+    setApplyModalError('');
+    if (!selectedTournamentForApply || !selectedTeamIdToApply) {
+      setApplyModalError('Please select an eligible team to apply');
+      return;
+    }
+
+    const chosenTeam = teams.find((t) => t._id === selectedTeamIdToApply);
+    const currentSportCat = sports.find((s) => s.code === selectedTournamentForApply.sportCategory);
+    const minRequired = currentSportCat?.minSquadSize || (selectedTournamentForApply.sportCategory === 'CRICKET' ? 11 : selectedTournamentForApply.sportCategory === 'FOOTBALL' ? 11 : 1);
+
+    if (chosenTeam && chosenTeam.players.length < minRequired) {
+      setApplyModalError(
+        `Your team must have at least ${minRequired} players registered to enter this tournament (Current: ${chosenTeam.players.length})`
+      );
+      return;
+    }
+
     try {
       const res = await API.post(`/tournaments/${selectedTournamentForApply._id}/apply`, {
         teamId: selectedTeamIdToApply,
@@ -143,10 +182,12 @@ export default function CaptainDashboard() {
       setSelectedTournamentForApply(null);
       setSelectedTeamIdToApply('');
       setApplyNotes('');
+      setApplyModalError('');
       await fetchInitialData();
       setActiveTab('applications');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit tournament application');
+      const errorMsg = err.response?.data?.message || 'Failed to submit tournament application';
+      setApplyModalError(errorMsg);
     }
   };
 
@@ -321,14 +362,21 @@ export default function CaptainDashboard() {
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Position / Role</label>
-                        <input
+                        <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>
+                          Position / Role ({selectedTeam.sport})
+                        </label>
+                        <select
                           required
-                          placeholder="e.g. Forward, Goalkeeper"
-                          value={playerForm.role}
+                          value={playerForm.role || getRolesForSport(selectedTeam.sport)[0]}
                           onChange={(e) => setPlayerForm({ ...playerForm, role: e.target.value })}
-                          style={{ width: '100%' }}
-                        />
+                          style={{ width: '100%', height: '38px', padding: '6px 10px', borderRadius: 6, border: '1px solid #cbd5e1', background: '#fff', fontSize: '13px' }}
+                        >
+                          {getRolesForSport(selectedTeam.sport).map((r) => (
+                            <option key={r} value={r}>
+                              {r}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Student / Govt ID Proof</label>
@@ -372,30 +420,46 @@ export default function CaptainDashboard() {
                             </tr>
                           </thead>
                           <tbody>
-                            {selectedTeam.players.map((p) => (
-                              <tr key={p._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#b45309' }}>
-                                  #{p.jerseyNumber}
-                                </td>
-                                <td style={{ padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{p.fullName}</td>
-                                <td style={{ padding: '8px 12px' }}>
-                                  <span style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: 4, color: '#334155' }}>
-                                    {p.role}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '8px 12px', color: '#64748b', fontFamily: 'monospace' }}>
-                                  {p.studentOrGovtId}
-                                </td>
-                                <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                                  <button
-                                    onClick={() => handleRemovePlayer(p._id)}
-                                    style={{ background: 'transparent', border: 'none', color: '#dc2626', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
-                                  >
-                                    Remove
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
+                            {selectedTeam.players.map((p) => {
+                              const isCaptainPlayer = p.isCaptain || p.role?.toLowerCase() === 'captain';
+                              return (
+                                <tr key={p._id} style={{ borderBottom: '1px solid #f1f5f9', background: isCaptainPlayer ? '#f8fafc' : 'transparent' }}>
+                                  <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#b45309' }}>
+                                    #{p.jerseyNumber}
+                                  </td>
+                                  <td style={{ padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>
+                                    {p.fullName}
+                                    {isCaptainPlayer && (
+                                      <span className="badge badge-approved" style={{ marginLeft: 8, fontSize: '11px' }}>
+                                        👑 Captain
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: '8px 12px' }}>
+                                    <span style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: 4, color: '#334155' }}>
+                                      {p.role}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '8px 12px', color: '#64748b', fontFamily: 'monospace' }}>
+                                    {p.studentOrGovtId}
+                                  </td>
+                                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                                    {isCaptainPlayer ? (
+                                      <span style={{ color: '#94a3b8', fontSize: '11px', fontStyle: 'italic', fontWeight: 500 }} title="Team Captain cannot be removed">
+                                        🔒 Squad Captain
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={() => handleRemovePlayer(p._id)}
+                                        style={{ background: 'transparent', border: 'none', color: '#dc2626', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+                                      >
+                                        Remove
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
                           </tbody>
                         </table>
                       </div>
@@ -412,7 +476,7 @@ export default function CaptainDashboard() {
       {activeTab === 'browse' && (
         <div>
           {/* Filters Bar */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
             <select
               value={filterSport}
               onChange={(e) => setFilterSport(e.target.value)}
@@ -425,12 +489,21 @@ export default function CaptainDashboard() {
                 </option>
               ))}
             </select>
-            <input
-              placeholder="Filter by District (e.g. Boston, Rajkot)..."
-              value={filterDistrict}
-              onChange={(e) => setFilterDistrict(e.target.value)}
-              style={{ width: '280px' }}
-            />
+            <div style={{ width: '280px' }}>
+              <SearchableCitySelect
+                value={filterDistrict}
+                onChange={(e) => setFilterDistrict(e.target.value)}
+                placeholder="Filter by city..."
+              />
+            </div>
+            {filterDistrict && (
+              <button
+                onClick={() => setFilterDistrict('')}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', padding: '6px 12px', fontSize: '12px', borderRadius: 4, cursor: 'pointer' }}
+              >
+                Clear City Filter
+              </button>
+            )}
             <div style={{ color: '#64748b', fontSize: '13px', alignSelf: 'center' }}>
               Showing {filteredTournaments.length} open competitions
             </div>
@@ -456,85 +529,120 @@ export default function CaptainDashboard() {
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   }}
                 >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: '24px' }}>{sportInfo?.icon || '🏆'}</span>
+                  {(() => {
+                    const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
+                    const isSlotsFull = (t.approvedTeamsCount || 0) >= t.maxTeams;
+                    const isRegOpen = t.isRegistrationOpen && !isDeadlinePassed && !isSlotsFull;
+
+                    return (
+                      <>
                         <div>
-                          <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{t.title}</h3>
-                          <span style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>{t.sportCategory}</span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: '24px' }}>{sportInfo?.icon || '🏆'}</span>
+                              <div>
+                                <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{t.title}</h3>
+                                <span style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600 }}>{t.sportCategory}</span>
+                              </div>
+                            </div>
+                            <span className={`badge ${isRegOpen ? 'badge-green' : 'badge-amber'}`}>
+                              {isRegOpen
+                                ? 'Registration Open'
+                                : isDeadlinePassed
+                                ? 'Registration Closed (Deadline Passed)'
+                                : isSlotsFull
+                                ? 'Registration Closed (Slots Full)'
+                                : 'Registration Closed'}
+                            </span>
+                          </div>
+
+                          <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14 }}>
+                            {t.description || 'Open tournament for qualified squads.'}
+                          </p>
+
+                          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ color: '#64748b' }}>📍 Venue & District:</span>
+                              <strong style={{ color: '#0f172a' }}>{t.venueName} ({t.district})</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ color: '#64748b' }}>📅 Event Schedule:</span>
+                              <strong style={{ color: '#334155' }}>
+                                {formatDate(t.startDate)} – {formatDate(t.endDate)}
+                              </strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                              <span style={{ color: '#64748b' }}>⏰ Entry Deadline:</span>
+                              <strong style={{ color: isDeadlinePassed ? '#dc2626' : '#b45309' }}>
+                                {formatDate(t.registrationDeadline)} {isDeadlinePassed ? '(Passed)' : ''}
+                              </strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#64748b' }}>Slots Filled:</span>
+                              <strong style={{ color: '#0284c7' }}>
+                                {t.approvedTeamsCount} / {t.maxTeams} Teams Approved
+                              </strong>
+                            </div>
+                          </div>
+
+                          {t.rules && (
+                            <div style={{ fontSize: '12px', color: '#475569', marginBottom: 14 }}>
+                              <span style={{ color: '#64748b', display: 'block', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
+                                Tournament Rules:
+                              </span>
+                              {t.rules}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <span className="badge badge-green">Open</span>
-                    </div>
 
-                    <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14 }}>
-                      {t.description || 'Open tournament for qualified squads.'}
-                    </p>
+                        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: '#64748b', fontSize: '12px' }}>
+                            Org: {t.organizer?.organizationName || t.organizer?.name || 'Authorized Host'}
+                          </span>
 
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ color: '#64748b' }}>📍 Venue & District:</span>
-                        <strong style={{ color: '#0f172a' }}>{t.venueName} ({t.district})</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ color: '#64748b' }}>📅 Event Schedule:</span>
-                        <strong style={{ color: '#334155' }}>
-                          {new Date(t.startDate).toLocaleDateString()} – {new Date(t.endDate).toLocaleDateString()}
-                        </strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ color: '#64748b' }}>⏰ Entry Deadline:</span>
-                        <strong style={{ color: '#b45309' }}>
-                          {new Date(t.registrationDeadline).toLocaleDateString()}
-                        </strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Slots Filled:</span>
-                        <strong style={{ color: '#0284c7' }}>
-                          {t.approvedTeamsCount} / {t.maxTeams} Teams Approved
-                        </strong>
-                      </div>
-                    </div>
-
-                    {t.rules && (
-                      <div style={{ fontSize: '12px', color: '#475569', marginBottom: 14 }}>
-                        <span style={{ color: '#64748b', display: 'block', textTransform: 'uppercase', fontSize: '11px', fontWeight: 600 }}>
-                          Tournament Rules:
-                        </span>
-                        {t.rules}
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748b', fontSize: '12px' }}>
-                      Org: {t.organizer?.organizationName || t.organizer?.name || 'Authorized Host'}
-                    </span>
-
-                    {alreadyApplied ? (
-                      <span className="badge badge-amber">Already Applied</span>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setSelectedTournamentForApply(t);
-                          const matchingTeams = teams.filter((tm) => tm.sport === t.sportCategory);
-                          setSelectedTeamIdToApply(matchingTeams[0]?._id || '');
-                        }}
-                        style={{
-                          background: '#0284c7',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '8px 16px',
-                          borderRadius: 6,
-                          fontWeight: 600,
-                          fontSize: '13px',
-                        }}
-                      >
-                        Register Squad
-                      </button>
-                    )}
-                  </div>
+                          {alreadyApplied ? (
+                            <span className="badge badge-amber">Already Applied</span>
+                          ) : !isRegOpen ? (
+                            <button
+                              disabled
+                              style={{
+                                background: '#f1f5f9',
+                                color: '#94a3b8',
+                                border: '1px solid #e2e8f0',
+                                padding: '8px 16px',
+                                borderRadius: 6,
+                                fontWeight: 600,
+                                fontSize: '13px',
+                                cursor: 'not-allowed',
+                              }}
+                            >
+                              {isDeadlinePassed ? 'Deadline Passed' : isSlotsFull ? 'Slots Filled' : 'Registration Closed'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedTournamentForApply(t);
+                                setApplyModalError('');
+                                const matchingTeams = teams.filter((tm) => tm.sport === t.sportCategory);
+                                setSelectedTeamIdToApply(matchingTeams[0]?._id || '');
+                              }}
+                              style={{
+                                background: '#0284c7',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: 6,
+                                fontWeight: 600,
+                                fontSize: '13px',
+                              }}
+                            >
+                              Register Squad
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               );
             })}
@@ -600,9 +708,17 @@ export default function CaptainDashboard() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#64748b' }}>📅 Tournament Dates:</span>
                       <strong style={{ color: '#0284c7' }}>
-                        {new Date(app.startDate).toLocaleDateString()} – {new Date(app.endDate).toLocaleDateString()}
+                        {formatDate(app.startDate)} – {formatDate(app.endDate)}
                       </strong>
                     </div>
+                    {app.appliedAt && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                        <span style={{ color: '#64748b' }}>Submitted On:</span>
+                        <strong style={{ color: '#475569' }}>
+                          {formatDate(app.appliedAt)}
+                        </strong>
+                      </div>
+                    )}
                   </div>
 
                   {app.status === 'APPROVED' && (
@@ -662,13 +778,21 @@ export default function CaptainDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District / City</label>
-                  <input
-                    required
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>District / City (Gujarat)</label>
+                  <SearchableCitySelect
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
-                    style={{ width: '100%' }}
+                    placeholder="Select Gujarat city..."
+                    required
                   />
+                </div>
+              </div>
+
+              {/* Default Captain Notice */}
+              <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: 8, padding: '12px 14px', fontSize: '13px', color: '#0369a1' }}>
+                <div style={{ fontWeight: 600, marginBottom: 2 }}>👑 Default Team Captain in Squad Roster</div>
+                <div>
+                  You (<strong>{user?.name}</strong>) will be automatically designated as <strong>Player #1</strong> with status <strong>"Captain"</strong> (Jersey #1) in the squad lineup.
                 </div>
               </div>
 
@@ -693,84 +817,151 @@ export default function CaptainDashboard() {
       )}
 
       {/* APPLY FOR TOURNAMENT MODAL */}
-      {selectedTournamentForApply && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 10 }}>
-              🏆 Register Squad for {selectedTournamentForApply.title}
-            </h3>
-            <p style={{ color: '#64748b', fontSize: '13px', marginBottom: 16 }}>
-              Select which of your registered {selectedTournamentForApply.sportCategory} teams will participate.
-            </p>
+      {selectedTournamentForApply && (() => {
+        const chosenTeam = teams.find((t) => t._id === selectedTeamIdToApply);
+        const currentSportCat = sports.find((s) => s.code === selectedTournamentForApply.sportCategory);
+        const minRequired = currentSportCat?.minSquadSize || (selectedTournamentForApply.sportCategory === 'CRICKET' ? 11 : selectedTournamentForApply.sportCategory === 'FOOTBALL' ? 11 : 1);
+        const isUnderSized = chosenTeam && chosenTeam.players.length < minRequired;
 
-            <form onSubmit={handleApplyForTournament} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
-                  Select Eligible Team ({selectedTournamentForApply.sportCategory})
-                </label>
-                {teams.filter((t) => t.sport === selectedTournamentForApply.sportCategory).length === 0 ? (
-                  <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: 10, borderRadius: 6, fontSize: '13px' }}>
-                    ⚠️ You do not have any registered teams for {selectedTournamentForApply.sportCategory}. Please register a team in that sport first.
-                  </div>
-                ) : (
-                  <select
-                    required
-                    value={selectedTeamIdToApply}
-                    onChange={(e) => setSelectedTeamIdToApply(e.target.value)}
-                    style={{ width: '100%' }}
-                  >
-                    <option value="">Select Team...</option>
-                    {teams
-                      .filter((t) => t.sport === selectedTournamentForApply.sportCategory)
-                      .map((t) => (
-                        <option key={t._id} value={t._id}>
-                          {t.name} ({t.players.length} players)
-                        </option>
-                      ))}
-                  </select>
-                )}
-              </div>
+        return (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', marginBottom: 10 }}>
+                🏆 Register Squad for {selectedTournamentForApply.title}
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '13px', marginBottom: 16 }}>
+                Select which of your registered {selectedTournamentForApply.sportCategory} teams will participate.
+              </p>
 
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
-                  Notes for Organizer (Optional)
-                </label>
-                <textarea
-                  rows="2"
-                  placeholder="Jersey color, arrival notes..."
-                  value={applyNotes}
-                  onChange={(e) => setApplyNotes(e.target.value)}
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTournamentForApply(null)}
-                  style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 16px' }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!selectedTeamIdToApply}
+              {/* Immediate Validation Error Banner */}
+              {applyModalError && (
+                <div
                   style={{
-                    background: !selectedTeamIdToApply ? '#cbd5e1' : '#0284c7',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '8px 20px',
-                    fontWeight: 600,
-                    cursor: !selectedTeamIdToApply ? 'not-allowed' : 'pointer',
+                    background: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    color: '#b91c1c',
+                    padding: '10px 14px',
+                    borderRadius: 6,
+                    fontSize: '13px',
+                    marginBottom: 14,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
                   }}
                 >
-                  Submit Squad Application
-                </button>
-              </div>
-            </form>
+                  <span style={{ fontSize: '15px' }}>⚠️</span>
+                  <span style={{ fontWeight: 500 }}>{applyModalError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleApplyForTournament} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
+                    Select Eligible Team ({selectedTournamentForApply.sportCategory})
+                  </label>
+                  {teams.filter((t) => t.sport === selectedTournamentForApply.sportCategory).length === 0 ? (
+                    <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#b91c1c', padding: 10, borderRadius: 6, fontSize: '13px' }}>
+                      ⚠️ You do not have any registered teams for {selectedTournamentForApply.sportCategory}. Please register a team in that sport first.
+                    </div>
+                  ) : (
+                    <>
+                      <select
+                        required
+                        value={selectedTeamIdToApply}
+                        onChange={(e) => {
+                          setSelectedTeamIdToApply(e.target.value);
+                          setApplyModalError('');
+                        }}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="">Select Team...</option>
+                        {teams
+                          .filter((t) => t.sport === selectedTournamentForApply.sportCategory)
+                          .map((t) => (
+                            <option key={t._id} value={t._id}>
+                              {t.name} ({t.players.length} players)
+                            </option>
+                          ))}
+                      </select>
+
+                      {chosenTeam && (
+                        <div
+                          style={{
+                            marginTop: 6,
+                            fontSize: '12px',
+                            color: isUnderSized ? '#dc2626' : '#16a34a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                        >
+                          {isUnderSized ? (
+                            <>
+                              <span>⚠️ Roster incomplete:</span>
+                              <strong>
+                                {chosenTeam.players.length} / {minRequired} minimum required players
+                              </strong>
+                            </>
+                          ) : (
+                            <>
+                              <span>✅ Squad ready:</span>
+                              <strong>
+                                {chosenTeam.players.length} registered players (minimum {minRequired} required)
+                              </strong>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: 4 }}>
+                    Notes for Organizer (Optional)
+                  </label>
+                  <textarea
+                    rows="2"
+                    placeholder="Jersey color, arrival notes..."
+                    value={applyNotes}
+                    onChange={(e) => setApplyNotes(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 12 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTournamentForApply(null);
+                      setApplyModalError('');
+                      setSelectedTeamIdToApply('');
+                      setApplyNotes('');
+                    }}
+                    style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 16px' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!selectedTeamIdToApply}
+                    style={{
+                      background: !selectedTeamIdToApply ? '#cbd5e1' : '#0284c7',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 20px',
+                      fontWeight: 600,
+                      cursor: !selectedTeamIdToApply ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Submit Squad Application
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

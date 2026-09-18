@@ -1,11 +1,12 @@
 const Team = require('../models/Team');
+const User = require('../models/User');
 
 // @desc    Create a new team
 // @route   POST /api/teams
 // @access  Private (CAPTAIN, ADMIN)
 exports.createTeam = async (req, res) => {
   try {
-    const { name, sport, logoUrl, district } = req.body;
+    const { name, sport, logoUrl, district, captainJerseyNumber, captainRole, captainIdProof } = req.body;
 
     // Optional: Prevent captain from creating duplicate team names for the same sport
     const existingTeam = await Team.findOne({
@@ -18,13 +19,23 @@ exports.createTeam = async (req, res) => {
       return res.status(400).json({ message: `You already have a team named "${name}" in ${sport}` });
     }
 
+    // Retrieve captain user details to pre-fill as first roster player
+    const captainUser = await User.findById(req.user.id);
+    const defaultCaptainPlayer = {
+      fullName: captainUser ? captainUser.name : 'Team Captain',
+      jerseyNumber: captainJerseyNumber ? Number(captainJerseyNumber) : 1,
+      role: captainRole || 'Captain',
+      studentOrGovtId: captainIdProof || (captainUser && captainUser.phone) || `CAP-${req.user.id.slice(-4).toUpperCase()}`,
+      isCaptain: true,
+    };
+
     const team = await Team.create({
       name,
       sport,
       logoUrl: logoUrl || '',
       district: district || req.user.district,
       captainId: req.user.id,
-      players: [],
+      players: [defaultCaptainPlayer],
     });
 
     res.status(201).json({ success: true, team });
@@ -120,6 +131,11 @@ exports.removePlayer = async (req, res) => {
 
     if (team.captainId.toString() !== req.user.id && req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Unauthorized: You can only modify your own team' });
+    }
+
+    const playerToRemove = team.players.id(playerId);
+    if (playerToRemove && playerToRemove.isCaptain) {
+      return res.status(400).json({ message: 'Cannot remove the Team Captain from the squad roster' });
     }
 
     // Remove player using sub-document pull

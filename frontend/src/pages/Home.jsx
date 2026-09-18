@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../api/axios';
+import { formatDate } from '../utils/dateUtils';
 
 export default function Home() {
   const [tournaments, setTournaments] = useState([]);
@@ -201,66 +202,86 @@ export default function Home() {
                   boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.05)',
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <div>
-                      <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{t.title}</h3>
-                      <div style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600, marginTop: 2 }}>
-                        {t.sportCategory} • {t.district}
+                {(() => {
+                  const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
+                  const isSlotsFull = (t.approvedTeamsCount || 0) >= t.maxTeams;
+                  const isRegOpen = t.isRegistrationOpen && !isDeadlinePassed && !isSlotsFull;
+
+                  return (
+                    <>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                          <div>
+                            <h3 style={{ fontSize: '17px', fontWeight: 'bold', color: '#0f172a' }}>{t.title}</h3>
+                            <div style={{ color: '#0284c7', fontSize: '12px', fontWeight: 600, marginTop: 2 }}>
+                              {t.sportCategory} • {t.district}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            <span className={`badge ${isRegOpen ? 'badge-green' : 'badge-amber'}`}>
+                              {isRegOpen ? 'Registration Open' : 'Registration Closed'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14, lineHeight: 1.5 }}>
+                          {t.description || 'Open tournament for collegiate and club squads.'}
+                        </p>
+
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <span style={{ color: '#64748b' }}>📍 Ground / Venue:</span>
+                            <strong style={{ color: '#0f172a' }}>{t.venueName}</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <span style={{ color: '#64748b' }}>📅 Event Dates:</span>
+                            <strong style={{ color: '#334155' }}>
+                              {formatDate(t.startDate)} – {formatDate(t.endDate)}
+                            </strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <span style={{ color: '#64748b' }}>⏰ Registration Deadline:</span>
+                            <strong style={{ color: isDeadlinePassed ? '#dc2626' : '#b45309' }}>
+                              {formatDate(t.registrationDeadline)} {isDeadlinePassed ? '(Passed)' : ''}
+                            </strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#64748b' }}>Teams:</span>
+                            <strong style={{ color: '#0284c7' }}>
+                              {t.approvedTeamsCount} / {t.maxTeams} Approved
+                            </strong>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <span className="badge badge-green">{t.format}</span>
-                  </div>
 
-                  <p style={{ color: '#475569', fontSize: '13px', marginBottom: 14, lineHeight: 1.5 }}>
-                    {t.description || 'Open tournament for collegiate and club squads.'}
-                  </p>
-
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: 12, borderRadius: 8, fontSize: '13px', marginBottom: 16 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#64748b' }}>📍 Ground / Venue:</span>
-                      <strong style={{ color: '#0f172a' }}>{t.venueName}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#64748b' }}>📅 Event Dates:</span>
-                      <strong style={{ color: '#334155' }}>
-                        {new Date(t.startDate).toLocaleDateString()} – {new Date(t.endDate).toLocaleDateString()}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ color: '#64748b' }}>⏰ Registration Ends:</span>
-                      <strong style={{ color: '#b45309' }}>
-                        {new Date(t.registrationDeadline).toLocaleDateString()}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Teams:</span>
-                      <strong style={{ color: '#0284c7' }}>
-                        {t.approvedTeamsCount} / {t.maxTeams} Approved
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontSize: '12px' }}>
-                    Hosted by: {t.organizer?.organizationName || t.organizer?.name || 'Tournament Committee'}
-                  </span>
-                  <Link
-                    to="/login"
-                    style={{
-                      background: '#0284c7',
-                      color: '#ffffff',
-                      padding: '7px 14px',
-                      borderRadius: 6,
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      textDecoration: 'none',
-                    }}
-                  >
-                    Enter Squad →
-                  </Link>
-                </div>
+                      <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#64748b', fontSize: '12px' }}>
+                          Hosted by: {t.organizer?.organizationName || t.organizer?.name || 'Tournament Committee'}
+                        </span>
+                        {isRegOpen ? (
+                          <Link
+                            to="/login"
+                            style={{
+                              background: '#0284c7',
+                              color: '#ffffff',
+                              padding: '7px 14px',
+                              borderRadius: 6,
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                            }}
+                          >
+                            Enter Squad →
+                          </Link>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, background: '#f1f5f9', padding: '6px 12px', borderRadius: 4 }}>
+                            {isDeadlinePassed ? 'Deadline Passed' : isSlotsFull ? 'Slots Filled' : 'Registration Closed'}
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             ))}
           </div>

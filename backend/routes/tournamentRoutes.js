@@ -10,6 +10,7 @@ const {
   getMyApplications,
   getTournaments,
   getTournamentById,
+  updateTournamentStatus,
 } = require('../controllers/tournamentController');
 
 // Public listing
@@ -26,6 +27,7 @@ router.get('/captain/my-applications', authorizeRoles('CAPTAIN'), getMyApplicati
 // Organizer actions
 router.post('/', authorizeRoles('ORGANIZER'), createTournament);
 router.get('/organizer/my-tournaments', authorizeRoles('ORGANIZER'), getMyOrganizedTournaments);
+router.put('/:id/status', authorizeRoles('ORGANIZER', 'ADMIN'), updateTournamentStatus);
 router.get('/:id/registrations', authorizeRoles('ORGANIZER', 'ADMIN'), getTournamentRegistrations);
 router.put('/:id/registrations/:teamId', authorizeRoles('ORGANIZER', 'ADMIN'), updateTeamRegistrationStatus);
 

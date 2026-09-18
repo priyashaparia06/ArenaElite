@@ -24,6 +24,10 @@ const playerSchema = new mongoose.Schema(
       required: [true, 'Student or Govt ID proof number is required'],
       trim: true,
     },
+    isCaptain: {
+      type: Boolean,
+      default: false,
+    },
     photoUrl: {
       type: String,
       default: '',

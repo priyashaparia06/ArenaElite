@@ -2,6 +2,7 @@ const Tournament = require('../models/Tournament');
 const Team = require('../models/Team');
 const SportCategory = require('../models/SportCategory');
 const User = require('../models/User');
+const { formatDate, formatDateTime } = require('../utils/dateFormatter');
 
 // ================= ORGANIZER ENDPOINTS ================= //
 
@@ -46,7 +47,7 @@ exports.createTournament = async (req, res) => {
       organizerId: req.user.id,
       sportCategory: sportCategory.toUpperCase(),
       district,
-      venueId: venueId || null,
+      venueId: (venueId && venueId !== 'OTHER') ? venueId : null,
       venueName,
       startDate,
       endDate,
@@ -69,12 +70,44 @@ exports.createTournament = async (req, res) => {
 // @route GET /api/tournaments/organizer/my-tournaments
 exports.getMyOrganizedTournaments = async (req, res) => {
   try {
+    const now = new Date();
+    // Auto-update status for tournaments whose deadline has passed
+    await Tournament.updateMany(
+      {
+        organizerId: req.user.id,
+        status: 'REGISTRATION_OPEN',
+        registrationDeadline: { $lt: now },
+      },
+      { $set: { status: 'REGISTRATION_CLOSED' } }
+    );
+
     const tournaments = await Tournament.find({ organizerId: req.user.id })
       .populate('registeredTeams.teamId', 'name sport logoUrl district players')
       .populate('registeredTeams.appliedBy', 'name email phone')
       .sort({ createdAt: -1 });
 
-    res.json(tournaments);
+    const formatted = tournaments.map((t) => {
+      const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
+      const approvedCount = t.registeredTeams?.filter((r) => r.status === 'APPROVED').length || 0;
+      const isSlotsFull = approvedCount >= t.maxTeams;
+      let effectiveStatus = t.status;
+      if (effectiveStatus === 'REGISTRATION_OPEN' && (isDeadlinePassed || isSlotsFull)) {
+        effectiveStatus = 'REGISTRATION_CLOSED';
+      }
+
+      const tObj = t.toObject ? t.toObject() : t;
+      return {
+        ...tObj,
+        status: effectiveStatus,
+        isDeadlinePassed,
+        isSlotsFull,
+        formattedStartDate: formatDate(t.startDate),
+        formattedEndDate: formatDate(t.endDate),
+        formattedRegistrationDeadline: formatDate(t.registrationDeadline),
+      };
+    });
+
+    res.json(formatted);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch your tournaments', error: err.message });
   }
@@ -100,13 +133,36 @@ exports.getTournamentRegistrations = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view registrations for this tournament' });
     }
 
+    const isDeadlinePassed = new Date() > new Date(tournament.registrationDeadline);
+    const approvedCount = tournament.registeredTeams.filter((r) => r.status === 'APPROVED').length;
+    const isSlotsFull = approvedCount >= tournament.maxTeams;
+    let effectiveStatus = tournament.status;
+    if (effectiveStatus === 'REGISTRATION_OPEN' && (isDeadlinePassed || isSlotsFull)) {
+      effectiveStatus = 'REGISTRATION_CLOSED';
+    }
+
     res.json({
       tournamentId: tournament._id,
       title: tournament.title,
       sportCategory: tournament.sportCategory,
       maxTeams: tournament.maxTeams,
-      approvedCount: tournament.registeredTeams.filter((r) => r.status === 'APPROVED').length,
-      registeredTeams: tournament.registeredTeams,
+      status: effectiveStatus,
+      isDeadlinePassed,
+      isSlotsFull,
+      startDate: tournament.startDate,
+      endDate: tournament.endDate,
+      registrationDeadline: tournament.registrationDeadline,
+      formattedStartDate: formatDate(tournament.startDate),
+      formattedEndDate: formatDate(tournament.endDate),
+      formattedRegistrationDeadline: formatDate(tournament.registrationDeadline),
+      approvedCount,
+      registeredTeams: tournament.registeredTeams.map((r) => {
+        const rObj = r.toObject ? r.toObject() : r;
+        return {
+          ...rObj,
+          formattedAppliedAt: formatDateTime(r.appliedAt),
+        };
+      }),
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch registrations', error: err.message });
@@ -165,6 +221,40 @@ exports.updateTeamRegistrationStatus = async (req, res) => {
   }
 };
 
+// @desc Update tournament status (e.g. REGISTRATION_OPEN, REGISTRATION_CLOSED, ONGOING, COMPLETED, CANCELLED)
+// @route PUT /api/tournaments/:id/status
+exports.updateTournamentStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'ONGOING', 'COMPLETED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    const tournament = await Tournament.findById(req.params.id);
+    if (!tournament) {
+      return res.status(404).json({ message: 'Tournament not found' });
+    }
+
+    if (tournament.organizerId.toString() !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Not authorized to manage this tournament' });
+    }
+
+    if (status === 'REGISTRATION_OPEN' && new Date() > new Date(tournament.registrationDeadline)) {
+      return res.status(400).json({
+        message: 'Cannot open registration: the registration deadline has already passed',
+      });
+    }
+
+    tournament.status = status;
+    await tournament.save();
+
+    res.json({ message: `Tournament status updated to ${status.replace('_', ' ')}`, tournament });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update tournament status', error: err.message });
+  }
+};
+
 // ================= TEAM CAPTAIN ENDPOINTS ================= //
 
 // @desc Apply / Register a team squad for a tournament
@@ -181,12 +271,22 @@ exports.applyForTournament = async (req, res) => {
       return res.status(404).json({ message: 'Tournament not found' });
     }
 
-    if (tournament.status !== 'REGISTRATION_OPEN') {
-      return res.status(400).json({ message: `Tournament registration is currently ${tournament.status}` });
+    const now = new Date();
+    if (new Date(tournament.registrationDeadline) < now) {
+      if (tournament.status === 'REGISTRATION_OPEN') {
+        tournament.status = 'REGISTRATION_CLOSED';
+        await tournament.save();
+      }
+      return res.status(400).json({ message: 'Registration is closed: the registration deadline has passed' });
     }
 
-    if (new Date() > new Date(tournament.registrationDeadline)) {
-      return res.status(400).json({ message: 'Tournament registration deadline has passed' });
+    if (tournament.status !== 'REGISTRATION_OPEN') {
+      return res.status(400).json({ message: `Tournament registration is closed (${tournament.status.replace('_', ' ')})` });
+    }
+
+    const approvedCount = tournament.registeredTeams.filter((r) => r.status === 'APPROVED').length;
+    if (approvedCount >= tournament.maxTeams) {
+      return res.status(400).json({ message: 'Tournament registration is closed: team capacity has been reached' });
     }
 
     const team = await Team.findById(teamId);
@@ -272,10 +372,15 @@ exports.getMyApplications = async (req, res) => {
           venueName: t.venueName,
           startDate: t.startDate,
           endDate: t.endDate,
+          registrationDeadline: t.registrationDeadline,
+          formattedStartDate: formatDate(t.startDate),
+          formattedEndDate: formatDate(t.endDate),
+          formattedRegistrationDeadline: formatDate(t.registrationDeadline),
           organizer: t.organizerId,
           team: r.teamId,
           status: r.status,
           appliedAt: r.appliedAt,
+          formattedAppliedAt: formatDateTime(r.appliedAt),
           rejectionReason: r.rejectionReason,
         });
       });
@@ -302,14 +407,32 @@ exports.getTournaments = async (req, res) => {
       filter.status = status;
     }
 
+    const now = new Date();
+    // Auto-update status for tournaments whose deadline has passed
+    await Tournament.updateMany(
+      {
+        status: 'REGISTRATION_OPEN',
+        registrationDeadline: { $lt: now },
+      },
+      { $set: { status: 'REGISTRATION_CLOSED' } }
+    );
+
     const tournaments = await Tournament.find(filter)
       .populate('organizerId', 'name organizationName')
       .populate('registeredTeams.teamId', 'name logoUrl')
       .sort({ startDate: 1 });
 
-    // Format response to include registered / approved counts
+    // Format response to include registered / approved counts & DD-MM-YYYY dates
     const data = tournaments.map((t) => {
       const approvedTeams = t.registeredTeams.filter((r) => r.status === 'APPROVED');
+      const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
+      const isSlotsFull = approvedTeams.length >= t.maxTeams;
+
+      let effectiveStatus = t.status;
+      if (effectiveStatus === 'REGISTRATION_OPEN' && (isDeadlinePassed || isSlotsFull)) {
+        effectiveStatus = 'REGISTRATION_CLOSED';
+      }
+
       return {
         _id: t._id,
         title: t.title,
@@ -320,18 +443,23 @@ exports.getTournaments = async (req, res) => {
         startDate: t.startDate,
         endDate: t.endDate,
         registrationDeadline: t.registrationDeadline,
+        formattedStartDate: formatDate(t.startDate),
+        formattedEndDate: formatDate(t.endDate),
+        formattedRegistrationDeadline: formatDate(t.registrationDeadline),
         maxTeams: t.maxTeams,
         format: t.format,
         rules: t.rules,
         bannerUrl: t.bannerUrl,
-        status: t.status,
+        status: effectiveStatus,
         organizer: t.organizerId,
         approvedTeamsCount: approvedTeams.length,
         totalRegisteredCount: t.registeredTeams.length,
+        isDeadlinePassed,
+        isSlotsFull,
         isRegistrationOpen:
-          t.status === 'REGISTRATION_OPEN' &&
-          new Date() <= new Date(t.registrationDeadline) &&
-          approvedTeams.length < t.maxTeams,
+          effectiveStatus === 'REGISTRATION_OPEN' &&
+          !isDeadlinePassed &&
+          !isSlotsFull,
       };
     });
 
@@ -353,7 +481,25 @@ exports.getTournamentById = async (req, res) => {
       return res.status(404).json({ message: 'Tournament not found' });
     }
 
-    res.json(tournament);
+    const tObj = tournament.toObject ? tournament.toObject() : tournament;
+    const isDeadlinePassed = new Date() > new Date(tournament.registrationDeadline);
+    const approvedCount = tournament.registeredTeams.filter((r) => r.status === 'APPROVED').length;
+    const isSlotsFull = approvedCount >= tournament.maxTeams;
+
+    let effectiveStatus = tournament.status;
+    if (effectiveStatus === 'REGISTRATION_OPEN' && (isDeadlinePassed || isSlotsFull)) {
+      effectiveStatus = 'REGISTRATION_CLOSED';
+    }
+
+    res.json({
+      ...tObj,
+      status: effectiveStatus,
+      isDeadlinePassed,
+      isSlotsFull,
+      formattedStartDate: formatDate(tournament.startDate),
+      formattedEndDate: formatDate(tournament.endDate),
+      formattedRegistrationDeadline: formatDate(tournament.registrationDeadline),
+    });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch tournament', error: err.message });
   }

@@ -274,6 +274,16 @@ exports.deleteVenue = async (req, res) => {
 // @route GET /api/admin/stats
 exports.getPlatformStats = async (req, res) => {
   try {
+    const now = new Date();
+    // Auto-update status for tournaments whose deadline has passed
+    await Tournament.updateMany(
+      {
+        status: 'REGISTRATION_OPEN',
+        registrationDeadline: { $lt: now },
+      },
+      { $set: { status: 'REGISTRATION_CLOSED' } }
+    );
+
     const totalUsers = await User.countDocuments();
     const organizersCount = await User.countDocuments({ role: 'ORGANIZER' });
     const pendingOrganizers = await User.countDocuments({ role: 'ORGANIZER', approvalStatus: 'PENDING' });
