@@ -178,7 +178,7 @@ export default function SearchableCitySelect({
                     if (!isSelected) e.currentTarget.style.background = '#ffffff';
                   }}
                 >
-                  <span>📍 {city}</span>
+                  <span>{city}</span>
                   {isSelected && <span style={{ color: '#0284c7', fontSize: '12px' }}>✓</span>}
                 </li>
               );
