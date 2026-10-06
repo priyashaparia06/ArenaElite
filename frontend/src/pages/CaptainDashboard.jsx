@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import API from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import SearchableCitySelect from '../components/SearchableCitySelect';
@@ -30,6 +30,9 @@ export default function CaptainDashboard() {
     role: '',
     studentOrGovtId: '',
   });
+  const [duplicateConfirmModal, setDuplicateConfirmModal] = useState(null);
+  const [addingPlayer, setAddingPlayer] = useState(false);
+  const playerNameInputRef = useRef(null);
 
   // Tournaments Browse State
   const [tournaments, setTournaments] = useState([]);
@@ -118,29 +121,80 @@ export default function CaptainDashboard() {
     }
   };
 
-  const handleAddPlayer = async (e) => {
-    e.preventDefault();
+  const submitPlayer = async (payload) => {
     if (!selectedTeam) return;
     setError('');
     setSuccess('');
+    setAddingPlayer(true);
     try {
-      const roles = getRolesForSport(selectedTeam.sport);
-      const payload = {
-        ...playerForm,
-        role: playerForm.role || roles[0] || 'Player',
-      };
       await API.post(`/teams/${selectedTeam._id}/players`, payload);
-      setSuccess(`Player #${playerForm.jerseyNumber} ${playerForm.fullName} added to squad!`);
+      setSuccess(`Player #${payload.jerseyNumber} ${payload.fullName} added to squad!`);
+      const roles = getRolesForSport(selectedTeam.sport);
       setPlayerForm({
         fullName: '',
         jerseyNumber: '',
         role: roles[0] || '',
         studentOrGovtId: '',
       });
+      setDuplicateConfirmModal(null);
       await fetchInitialData();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add player');
+    } finally {
+      setAddingPlayer(false);
     }
+  };
+
+  const handleAddPlayer = async (e) => {
+    e.preventDefault();
+    if (!selectedTeam) return;
+    setError('');
+    setSuccess('');
+
+    // 1. Unique jersey number check
+    const jerseyExists = selectedTeam.players.some(
+      (p) => Number(p.jerseyNumber) === Number(playerForm.jerseyNumber)
+    );
+    if (jerseyExists) {
+      setError(`Jersey number ${playerForm.jerseyNumber} is already taken in this team`);
+      return;
+    }
+
+    const trimmedName = playerForm.fullName.trim();
+    const roles = getRolesForSport(selectedTeam.sport);
+    const payload = {
+      ...playerForm,
+      fullName: trimmedName,
+      role: playerForm.role || roles[0] || 'Player',
+    };
+
+    // 2. Duplicate player name detection (case-insensitive check, e.g. "Raj Mehta")
+    const nameExists = selectedTeam.players.find(
+      (p) => p.fullName.trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+
+    if (nameExists) {
+      // Do not add player immediately; trigger confirmation dialog
+      setDuplicateConfirmModal({
+        name: trimmedName,
+        payload,
+        existingPlayer: nameExists,
+      });
+      return;
+    }
+
+    // If unique, add directly
+    await submitPlayer(payload);
+  };
+
+  const handleCancelDuplicate = () => {
+    setDuplicateConfirmModal(null);
+    setTimeout(() => {
+      if (playerNameInputRef.current) {
+        playerNameInputRef.current.focus();
+        playerNameInputRef.current.select();
+      }
+    }, 50);
   };
 
   const handleRemovePlayer = async (playerId) => {
@@ -341,6 +395,7 @@ export default function CaptainDashboard() {
                       <div>
                         <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Full Name</label>
                         <input
+                          ref={playerNameInputRef}
                           required
                           placeholder="e.g. Lionel Messi"
                           value={playerForm.fullName}
@@ -962,6 +1017,123 @@ export default function CaptainDashboard() {
           </div>
         );
       })()}
+
+      {/* DUPLICATE PLAYER NAME CONFIRMATION DIALOG */}
+      {duplicateConfirmModal && (
+        <div className="modal-overlay" style={{ zIndex: 1000 }}>
+          <div
+            className="modal-content"
+            style={{
+              maxWidth: '480px',
+              borderRadius: 12,
+              padding: '24px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: '#fef3c7',
+                  border: '1px solid #fde68a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '22px',
+                  flexShrink: 0,
+                }}
+              >
+                ⚠️
+              </div>
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                  Duplicate Name Detected
+                </h3>
+                <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>
+                  Squad Roster Verification
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#fffbeb',
+                border: '1px solid #fef3c7',
+                borderRadius: 8,
+                padding: '14px 16px',
+                marginBottom: 16,
+              }}
+            >
+              <p style={{ color: '#92400e', fontSize: '14px', lineHeight: 1.5, margin: 0 }}>
+                A player named <strong>"{duplicateConfirmModal.name}"</strong> already exists in this squad. Do you still want to add this player?
+              </p>
+            </div>
+
+            <div
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '12px 14px',
+                marginBottom: 20,
+                fontSize: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Existing Squad Member:</span>
+                <span style={{ fontWeight: 600, color: '#0f172a' }}>
+                  #{duplicateConfirmModal.existingPlayer?.jerseyNumber} {duplicateConfirmModal.existingPlayer?.fullName} ({duplicateConfirmModal.existingPlayer?.role})
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>New Player to Add:</span>
+                <span style={{ fontWeight: 600, color: '#0284c7' }}>
+                  #{duplicateConfirmModal.payload?.jerseyNumber} {duplicateConfirmModal.payload?.fullName} ({duplicateConfirmModal.payload?.role})
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                onClick={handleCancelDuplicate}
+                style={{
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  padding: '9px 16px',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: '13px',
+                }}
+              >
+                No, Modify Name
+              </button>
+              <button
+                type="button"
+                disabled={addingPlayer}
+                onClick={() => submitPlayer(duplicateConfirmModal.payload)}
+                style={{
+                  background: addingPlayer ? '#93c5fd' : '#0284c7',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '9px 18px',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: addingPlayer ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {addingPlayer ? 'Adding...' : 'Yes, Add Player'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
