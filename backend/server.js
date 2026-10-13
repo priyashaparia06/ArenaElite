@@ -13,6 +13,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/teams', require('./routes/teamRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/tournaments', require('./routes/tournamentRoutes'));
+app.use('/api/matches', require('./routes/matchRoutes'));
 
 // Public convenience endpoints for active sports and venues
 app.get('/api/public/sports', async (req, res) => {

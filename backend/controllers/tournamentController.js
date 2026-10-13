@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const Tournament = require('../models/Tournament');
 const Team = require('../models/Team');
 const SportCategory = require('../models/SportCategory');
@@ -502,5 +503,73 @@ exports.getTournamentById = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch tournament', error: err.message });
+  }
+};
+
+// ================= FIELD SCORER MANAGEMENT ================= //
+
+// @desc Create a new Field Scorer account directly by Organizer
+// @route POST /api/tournaments/organizer/scorers
+exports.createFieldScorer = async (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+
+    if (!name || !email || !phone || !password) {
+      return res.status(400).json({ message: 'Name, email, phone, and password are required' });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return res.status(400).json({ message: 'A user with this email address already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const organizer = await User.findById(req.user.id);
+    const scorer = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      password: hashedPassword,
+      role: 'SCORER',
+      district: organizer?.district || 'Gujarat',
+      approvalStatus: 'APPROVED',
+      isActive: true,
+      createdBy: req.user.id,
+    });
+
+    res.status(201).json({
+      message: `Field Scorer ${scorer.name} created successfully`,
+      scorer: {
+        _id: scorer._id,
+        name: scorer.name,
+        email: scorer.email,
+        phone: scorer.phone,
+        role: scorer.role,
+        district: scorer.district,
+        createdAt: scorer.createdAt,
+      },
+      temporaryPassword: password,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create field scorer', error: err.message });
+  }
+};
+
+// @desc Get all Field Scorers created by or available to this Organizer
+// @route GET /api/tournaments/organizer/scorers
+exports.getOrganizerScorers = async (req, res) => {
+  try {
+    const scorers = await User.find({
+      role: 'SCORER',
+      $or: [{ createdBy: req.user.id }, { createdBy: null }],
+    })
+      .select('-password')
+      .sort({ createdAt: -1 });
+
+    res.json(scorers);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch field scorers', error: err.message });
   }
 };

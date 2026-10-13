@@ -11,6 +11,8 @@ const {
   getTournaments,
   getTournamentById,
   updateTournamentStatus,
+  createFieldScorer,
+  getOrganizerScorers,
 } = require('../controllers/tournamentController');
 
 // Public listing
@@ -30,5 +32,7 @@ router.get('/organizer/my-tournaments', authorizeRoles('ORGANIZER'), getMyOrgani
 router.put('/:id/status', authorizeRoles('ORGANIZER', 'ADMIN'), updateTournamentStatus);
 router.get('/:id/registrations', authorizeRoles('ORGANIZER', 'ADMIN'), getTournamentRegistrations);
 router.put('/:id/registrations/:teamId', authorizeRoles('ORGANIZER', 'ADMIN'), updateTeamRegistrationStatus);
+router.post('/organizer/scorers', authorizeRoles('ORGANIZER', 'ADMIN'), createFieldScorer);
+router.get('/organizer/scorers', authorizeRoles('ORGANIZER', 'ADMIN'), getOrganizerScorers);
 
 module.exports = router;

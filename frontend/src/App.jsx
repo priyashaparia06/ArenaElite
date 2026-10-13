@@ -8,6 +8,7 @@ import Register from './pages/Register.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import OrganizerDashboard from './pages/OrganizerDashboard.jsx';
 import CaptainDashboard from './pages/CaptainDashboard.jsx';
+import ScorerDashboard from './pages/ScorerDashboard.jsx';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -121,6 +122,24 @@ function Navbar() {
           </Link>
         )}
 
+        {(user?.role === 'SCORER' || user?.role === 'ADMIN') && (
+          <Link
+            to="/scorer/dashboard"
+            style={{
+              background: '#fef3c7',
+              border: '1px solid #fde68a',
+              color: '#b45309',
+              padding: '6px 14px',
+              borderRadius: 6,
+              fontSize: '13px',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            ⏱️ Scorer Console
+          </Link>
+        )}
+
         {/* User Account or Auth CTA */}
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 8 }}>
@@ -221,20 +240,9 @@ export default function App() {
             <Route path="/captain/dashboard" element={<CaptainDashboard />} />
           </Route>
 
-          {/* Scorer Console (Upcoming) */}
+          {/* Scorer Console */}
           <Route element={<ProtectedRoute allowedRoles={['SCORER', 'ADMIN']} />}>
-            <Route
-              path="/scorer/dashboard"
-              element={
-                <div style={{ padding: '40px 24px', textAlign: 'center', maxWidth: 600, margin: '40px auto', background: '#ffffff', borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-                  <span style={{ fontSize: '36px' }}>⏱️</span>
-                  <h2 style={{ color: '#0284c7', marginTop: 12 }}>Field Scorer Console</h2>
-                  <p style={{ color: '#64748b', marginTop: 8 }}>
-                    Low-latency live scoring and match clock engine will activate when fixtures are scheduled.
-                  </p>
-                </div>
-              }
-            />
+            <Route path="/scorer/dashboard" element={<ScorerDashboard />} />
           </Route>
         </Routes>
       </Router>
