@@ -11,6 +11,10 @@ const matchSchema = new mongoose.Schema(
       type: String,
       default: 'Round 1',
     },
+    roundIndex: {
+      type: Number,
+      default: 1,
+    },
     matchNumber: {
       type: Number,
       required: true,
@@ -18,12 +22,12 @@ const matchSchema = new mongoose.Schema(
     teamA: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Team',
-      required: true,
+      default: null,
     },
     teamB: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Team',
-      required: true,
+      default: null,
     },
     assignedScorer: {
       type: mongoose.Schema.Types.ObjectId,
@@ -32,7 +36,7 @@ const matchSchema = new mongoose.Schema(
     },
     scheduledDate: {
       type: Date,
-      required: true,
+      default: null,
     },
     venue: {
       type: String,
@@ -49,14 +53,39 @@ const matchSchema = new mongoose.Schema(
       enum: ['SCHEDULED', 'LIVE', 'COMPLETED', 'ABANDONED'],
       default: 'SCHEDULED',
     },
+    isBye: {
+      type: Boolean,
+      default: false,
+    },
     score: {
       teamAScore: { type: String, default: '' },
       teamBScore: { type: String, default: '' },
       resultSummary: { type: String, default: '' },
+      note: { type: String, default: '' },
     },
     winnerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Team',
+      default: null,
+    },
+    nextMatchId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Match',
+      default: null,
+    },
+    nextMatchSlot: {
+      type: String,
+      enum: ['teamA', 'teamB', null],
+      default: null,
+    },
+    sourceMatchA: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Match',
+      default: null,
+    },
+    sourceMatchB: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Match',
       default: null,
     },
   },

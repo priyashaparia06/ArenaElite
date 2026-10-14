@@ -2,12 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../api/axios';
 import { formatDate } from '../utils/dateUtils';
+import BracketViewer from '../components/BracketViewer';
 
 export default function Home() {
   const [tournaments, setTournaments] = useState([]);
   const [sports, setSports] = useState([]);
   const [selectedSport, setSelectedSport] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Public Bracket Modal State
+  const [selectedTournamentForBracket, setSelectedTournamentForBracket] = useState(null);
+  const [publicMatches, setPublicMatches] = useState([]);
+  const [loadingBracket, setLoadingBracket] = useState(false);
 
   useEffect(() => {
     const fetchPublicData = async () => {
@@ -32,6 +38,20 @@ export default function Home() {
     if (!selectedSport) return true;
     return t.sportCategory === selectedSport;
   });
+
+  const handleOpenBracketModal = async (tournament) => {
+    setSelectedTournamentForBracket(tournament);
+    try {
+      setLoadingBracket(true);
+      const res = await API.get(`/matches/tournament/${tournament._id}`);
+      setPublicMatches(res.data);
+    } catch (err) {
+      console.error('Failed to load tournament fixtures:', err);
+      setPublicMatches([]);
+    } finally {
+      setLoadingBracket(false);
+    }
+  };
 
   return (
     <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '32px 20px', width: '100%' }}>
@@ -254,30 +274,50 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                         <span style={{ color: '#64748b', fontSize: '12px' }}>
                           Hosted by: {t.organizer?.organizationName || t.organizer?.name || 'Tournament Committee'}
                         </span>
-                        {isRegOpen ? (
-                          <Link
-                            to="/login"
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <button
+                            onClick={() => handleOpenBracketModal(t)}
                             style={{
-                              background: '#0284c7',
-                              color: '#ffffff',
-                              padding: '7px 14px',
+                              background: '#f8fafc',
+                              color: '#0369a1',
+                              border: '1px solid #bae6fd',
+                              padding: '6px 12px',
                               borderRadius: 6,
                               fontSize: '12px',
                               fontWeight: 600,
-                              textDecoration: 'none',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                           >
-                            Enter Squad →
-                          </Link>
-                        ) : (
-                          <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, background: '#f1f5f9', padding: '6px 12px', borderRadius: 4 }}>
-                            {isDeadlinePassed ? 'Deadline Passed' : isSlotsFull ? 'Slots Filled' : 'Registration Closed'}
-                          </span>
-                        )}
+                            <span>🏆</span> Fixtures & Bracket
+                          </button>
+                          {isRegOpen ? (
+                            <Link
+                              to="/login"
+                              style={{
+                                background: '#0284c7',
+                                color: '#ffffff',
+                                padding: '7px 14px',
+                                borderRadius: 6,
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                              }}
+                            >
+                              Enter Squad →
+                            </Link>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, background: '#f1f5f9', padding: '6px 12px', borderRadius: 4 }}>
+                              {isDeadlinePassed ? 'Deadline Passed' : isSlotsFull ? 'Slots Filled' : 'Registration Closed'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </>
                   );
@@ -287,6 +327,66 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* PUBLIC TOURNAMENT FIXTURES & BRACKET MODAL */}
+      {selectedTournamentForBracket && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div
+            className="modal-content"
+            style={{
+              maxWidth: '1100px',
+              width: '95vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#ffffff',
+              borderRadius: 12,
+              padding: '24px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>
+                  🏆 Tournament Fixtures & Knockout Bracket
+                </h3>
+                <p style={{ color: '#0284c7', fontSize: '14px', fontWeight: 600, marginTop: 3 }}>
+                  {selectedTournamentForBracket.title} • {selectedTournamentForBracket.sportCategory}
+                </p>
+                <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>
+                  📍 {selectedTournamentForBracket.venueName} &nbsp;|&nbsp; {selectedTournamentForBracket.district}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedTournamentForBracket(null)}
+                style={{ background: 'none', border: 'none', fontSize: '22px', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingBracket ? (
+              <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>
+                Loading tournament fixtures and bracket tree...
+              </div>
+            ) : (
+              <BracketViewer
+                tournament={selectedTournamentForBracket}
+                matches={publicMatches}
+                isOrganizer={false}
+              />
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18, borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
+              <button
+                onClick={() => setSelectedTournamentForBracket(null)}
+                style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 18px', borderRadius: 6, fontWeight: 600 }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

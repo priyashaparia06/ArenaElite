@@ -3,6 +3,8 @@ import API from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import SearchableCitySelect from '../components/SearchableCitySelect';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
+import BracketViewer from '../components/BracketViewer';
+import ByeStrategyModal from '../components/ByeStrategyModal';
 
 export default function OrganizerDashboard() {
   const { user } = useContext(AuthContext);
@@ -56,6 +58,8 @@ export default function OrganizerDashboard() {
   const [tournamentMatches, setTournamentMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [matchActionMessage, setMatchActionMessage] = useState('');
+  const [showByeModal, setShowByeModal] = useState(false);
+  const [byeModalTournament, setByeModalTournament] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -135,11 +139,43 @@ export default function OrganizerDashboard() {
     }
   };
 
-  const handleGenerateMatches = async (tournamentId) => {
+  const handleTriggerGeneration = (tournament, force = false) => {
+    const approvedTeams = tournament.registeredTeams?.filter((r) => r.status === 'APPROVED') || [];
+    const N = approvedTeams.length;
+    if (N < 2) {
+      setMatchActionMessage(`At least 2 approved teams are required to generate knockout fixtures. Currently approved: ${N}`);
+      return;
+    }
+
+    const bracketSize = Math.pow(2, Math.ceil(Math.log2(N)));
+    const byesCount = bracketSize - N;
+
+    if (byesCount > 0) {
+      // Non-power-of-2 teams: prompt organizer for BYE strategy selection
+      setByeModalTournament({ ...tournament, _force: force });
+      setShowByeModal(true);
+    } else {
+      // Perfect power of 2: generate directly
+      executeGenerateMatches(tournament._id, 'SEEDED', force);
+    }
+  };
+
+  const handleConfirmByeStrategy = async (strategy) => {
+    if (!byeModalTournament) return;
+    const tournamentId = byeModalTournament._id;
+    const force = !!byeModalTournament._force;
+    setShowByeModal(false);
+    await executeGenerateMatches(tournamentId, strategy, force);
+  };
+
+  const executeGenerateMatches = async (tournamentId, byeStrategy = 'SEEDED', force = false) => {
     try {
       setLoadingMatches(true);
       setMatchActionMessage('');
-      const res = await API.post(`/matches/tournament/${tournamentId}/generate`);
+      const res = await API.post(`/matches/tournament/${tournamentId}/generate`, {
+        byeStrategy,
+        force,
+      });
       setTournamentMatches(res.data.matches);
       setMatchActionMessage(res.data.message);
     } catch (err) {
@@ -149,17 +185,10 @@ export default function OrganizerDashboard() {
     }
   };
 
-  const handleAssignScorer = async (matchId, scorerId) => {
-    try {
-      const res = await API.put(`/matches/${matchId}/assign-scorer`, { scorerId });
-      setTournamentMatches((prev) =>
-        prev.map((m) => (m._id === matchId ? res.data.match : m))
-      );
-      setMatchActionMessage(res.data.message);
-      setTimeout(() => setMatchActionMessage(''), 3000);
-    } catch (err) {
-      setMatchActionMessage(err.response?.data?.message || 'Failed to assign scorer');
-    }
+  const handleMatchUpdated = (updatedMatch) => {
+    setTournamentMatches((prev) =>
+      prev.map((m) => (m._id === updatedMatch._id ? updatedMatch : m))
+    );
   };
 
   const handleCreateTournament = async (e) => {
@@ -1237,11 +1266,11 @@ export default function OrganizerDashboard() {
 
         return (
           <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '780px', maxHeight: '88vh' }}>
+            <div className="modal-content" style={{ maxWidth: '1100px', width: '95vw', maxHeight: '90vh', overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div>
-                  <h3 style={{ fontSize: '19px', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>
-                    ⚡ Match Fixtures & Scorer Delegation
+                  <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#0f172a', margin: 0 }}>
+                    ⚡ Knockout Fixtures & Scorer Delegation
                   </h3>
                   <p style={{ color: '#0284c7', fontSize: '13px', fontWeight: 600, marginTop: 2 }}>
                     {selectedTournamentForMatches.title} ({selectedTournamentForMatches.sportCategory})
@@ -1279,10 +1308,10 @@ export default function OrganizerDashboard() {
                   ) : (
                     <>
                       <p style={{ color: '#64748b', fontSize: '13px', maxWidth: 480, margin: '0 auto 16px auto' }}>
-                        You have <strong>{approvedTeams.length}</strong> approved teams ready for competition. Click below to automatically generate knockout match fixtures.
+                        You have <strong>{approvedTeams.length}</strong> approved teams ready for competition. Click below to automatically generate knockout match fixtures with automated BYE allocation if required.
                       </p>
                       <button
-                        onClick={() => handleGenerateMatches(selectedTournamentForMatches._id)}
+                        onClick={() => handleTriggerGeneration(selectedTournamentForMatches, false)}
                         disabled={loadingMatches}
                         style={{
                           background: '#0284c7',
@@ -1301,128 +1330,18 @@ export default function OrganizerDashboard() {
                   )}
                 </div>
               ) : (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#334155' }}>
-                      📋 Scheduled Fixtures ({tournamentMatches.length} Matches)
-                    </span>
-                    <button
-                      onClick={() => handleGenerateMatches(selectedTournamentForMatches._id)}
-                      disabled={loadingMatches}
-                      style={{
-                        background: '#f8fafc',
-                        border: '1px solid #cbd5e1',
-                        color: '#475569',
-                        padding: '6px 12px',
-                        borderRadius: 6,
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {loadingMatches ? 'Regenerating...' : '🔄 Regenerate Fixtures'}
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {tournamentMatches.map((m) => (
-                      <div
-                        key={m._id}
-                        style={{
-                          background: '#ffffff',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: 10,
-                          padding: 16,
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0284c7' }}>
-                            {m.round} • Match #{m.matchNumber}
-                          </span>
-                          <span className={`badge ${m.status === 'LIVE' ? 'badge-blue' : m.status === 'COMPLETED' ? 'badge-green' : 'badge-amber'}`}>
-                            {m.status}
-                          </span>
-                        </div>
-
-                        {/* Team matchup banner */}
-                        <div
-                          style={{
-                            background: '#f8fafc',
-                            borderRadius: 8,
-                            padding: '10px 14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: 10,
-                          }}
-                        >
-                          <div style={{ flex: 1, fontWeight: 700, color: '#0f172a', textAlign: 'center' }}>
-                            {m.teamA?.name || 'Team A'}
-                          </div>
-                          <span style={{ padding: '2px 8px', background: '#e2e8f0', borderRadius: 9999, fontSize: '11px', fontWeight: 800, color: '#64748b', margin: '0 10px' }}>
-                            VS
-                          </span>
-                          <div style={{ flex: 1, fontWeight: 700, color: '#0f172a', textAlign: 'center' }}>
-                            {m.teamB?.name || 'Team B'}
-                          </div>
-                        </div>
-
-                        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 12 }}>
-                          <span>📍 {m.venue || selectedTournamentForMatches.venueName}</span>
-                          <span>⏰ {formatDateTime(m.scheduledDate)}</span>
-                        </div>
-
-                        {/* Assign Scorer Dropdown */}
-                        <div
-                          style={{
-                            borderTop: '1px solid #f1f5f9',
-                            paddingTop: 10,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 12,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                              ⏱️ Assign Scorer:
-                            </span>
-                            <select
-                              value={m.assignedScorer?._id || ''}
-                              onChange={(e) => handleAssignScorer(m._id, e.target.value)}
-                              style={{
-                                padding: '6px 10px',
-                                fontSize: '13px',
-                                borderRadius: 6,
-                                border: '1px solid #cbd5e1',
-                                background: '#ffffff',
-                                minWidth: '220px',
-                              }}
-                            >
-                              <option value="">-- No Scorer Assigned --</option>
-                              {scorers.map((s) => (
-                                <option key={s._id} value={s._id}>
-                                  {s.name} ({s.phone || s.email})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {m.assignedScorer && (
-                            <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600 }}>
-                              ✓ Delegated to {m.assignedScorer.name}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <BracketViewer
+                  tournament={selectedTournamentForMatches}
+                  matches={tournamentMatches}
+                  scorers={scorers}
+                  isOrganizer={true}
+                  onMatchUpdated={handleMatchUpdated}
+                  onRegenerate={() => handleTriggerGeneration(selectedTournamentForMatches, true)}
+                  loading={loadingMatches}
+                />
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18, borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
                 <button
                   onClick={() => setSelectedTournamentForMatches(null)}
                   style={{ background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', padding: '8px 18px', borderRadius: 6, fontWeight: 600 }}
@@ -1434,6 +1353,15 @@ export default function OrganizerDashboard() {
           </div>
         );
       })()}
+
+      {/* BYE ALLOCATION STRATEGY MODAL */}
+      <ByeStrategyModal
+        isOpen={showByeModal}
+        onClose={() => setShowByeModal(false)}
+        tournament={byeModalTournament}
+        onConfirm={handleConfirmByeStrategy}
+        loading={loadingMatches}
+      />
     </div>
   );
 }
