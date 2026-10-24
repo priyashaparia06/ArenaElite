@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import API from '../api/axios';
 import { formatDateTime } from '../utils/dateUtils';
 
@@ -12,6 +12,7 @@ export default function BracketViewer({
   loading = false,
 }) {
   const [viewMode, setViewMode] = useState('tree'); // 'tree' or 'list'
+  const [activeRoundFilter, setActiveRoundFilter] = useState('ALL');
   const [editingMatch, setEditingMatch] = useState(null);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({
@@ -22,6 +23,9 @@ export default function BracketViewer({
   const [scheduleError, setScheduleError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  const scrollContainerRef = useRef(null);
+  const roundColumnRefs = useRef({});
+
   // Group matches by roundIndex
   const roundMap = {};
   matches.forEach((m) => {
@@ -31,10 +35,14 @@ export default function BracketViewer({
   });
   const sortedRoundKeys = Object.keys(roundMap).sort((a, b) => Number(a) - Number(b));
 
+  // Sort matches within each round by matchNumber ascending
+  sortedRoundKeys.forEach((k) => {
+    roundMap[k].sort((a, b) => (a.matchNumber || 0) - (b.matchNumber || 0));
+  });
+
   const openScheduleModal = (match) => {
     setEditingMatch(match);
     setScheduleError('');
-    // Format date for datetime-local input
     let formattedDate = '';
     if (match.scheduledDate) {
       const d = new Date(match.scheduledDate);
@@ -76,6 +84,26 @@ export default function BracketViewer({
     }
   };
 
+  const scrollToRound = (roundKey) => {
+    setActiveRoundFilter(roundKey);
+    if (roundKey === 'ALL') {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+      }
+    } else {
+      const el = roundColumnRefs.current[roundKey];
+      if (el && scrollContainerRef.current) {
+        const containerLeft = scrollContainerRef.current.getBoundingClientRect().left;
+        const elLeft = el.getBoundingClientRect().left;
+        const currentScroll = scrollContainerRef.current.scrollLeft;
+        scrollContainerRef.current.scrollTo({
+          left: currentScroll + (elLeft - containerLeft) - 20,
+          behavior: 'smooth',
+        });
+      }
+    }
+  };
+
   if (!matches || matches.length === 0) {
     return (
       <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: 10, padding: '40px 20px', textAlign: 'center' }}>
@@ -90,326 +118,452 @@ export default function BracketViewer({
     );
   }
 
+  // --- Bracket Tree Layout Dimensions ---
+  const CARD_WIDTH = 220; // width of each match card in px
+  const CARD_HEIGHT = 86; // height of each match card in px
+  const CONNECTOR_WIDTH = 46; // width of SVG fork connecting two rounds
+  const BASE_ROW_HEIGHT = 124; // row height in Round 1 (base vertical unit)
+
+  const numRounds = sortedRoundKeys.length;
+  const firstRoundMatchesCount = (roundMap[sortedRoundKeys[0]] || []).length;
+  const TOTAL_HEIGHT = Math.max(firstRoundMatchesCount * BASE_ROW_HEIGHT, 320);
+
+  // Dynamic Y-coordinate calculator for round r (0-indexed) and match index m
+  const getY = (rIndex, mIndex) => {
+    if (rIndex === 0) {
+      return mIndex * BASE_ROW_HEIGHT + BASE_ROW_HEIGHT / 2;
+    }
+    const prevCount = (roundMap[sortedRoundKeys[rIndex - 1]] || []).length;
+    const topFeederIdx = 2 * mIndex;
+    const botFeederIdx = 2 * mIndex + 1;
+
+    const yTop = getY(rIndex - 1, Math.min(topFeederIdx, prevCount - 1));
+    const yBot = botFeederIdx < prevCount ? getY(rIndex - 1, botFeederIdx) : yTop;
+    return (yTop + yBot) / 2;
+  };
+
+  // Helper to format short date/time
+  const getMatchTimeBadge = (m) => {
+    if (m.isBye) {
+      return <span style={{ color: '#15803d', fontWeight: 700, fontSize: '10px' }}>BYE</span>;
+    }
+    if (m.status === 'COMPLETED') {
+      return <span style={{ color: '#64748b', fontWeight: 600, fontSize: '10px' }}>Full time</span>;
+    }
+    if (m.status === 'LIVE') {
+      return <span style={{ color: '#0284c7', fontWeight: 700, fontSize: '10px' }}>● LIVE</span>;
+    }
+    if (m.scheduledDate) {
+      const formatted = formatDateTime(m.scheduledDate);
+      return <span style={{ color: '#64748b', fontSize: '10px' }}>{formatted ? formatted.slice(0, 16) : 'Scheduled'}</span>;
+    }
+    return <span style={{ color: '#94a3b8', fontSize: '10px' }}>TBD</span>;
+  };
+
   return (
     <div>
-      {/* Top Controls: View Mode & Regenerate Button */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 12,
-          marginBottom: 16,
-          paddingBottom: 12,
-          borderBottom: '1px solid #f1f5f9',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <button
-            onClick={() => setViewMode('tree')}
-            style={{
-              background: viewMode === 'tree' ? '#0284c7' : '#ffffff',
-              color: viewMode === 'tree' ? '#ffffff' : '#475569',
-              border: viewMode === 'tree' ? '1px solid #0284c7' : '1px solid #cbd5e1',
-              padding: '6px 14px',
-              borderRadius: 6,
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <span>🌳</span> Visual Bracket Tree
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            style={{
-              background: viewMode === 'list' ? '#0284c7' : '#ffffff',
-              color: viewMode === 'list' ? '#ffffff' : '#475569',
-              border: viewMode === 'list' ? '1px solid #0284c7' : '1px solid #cbd5e1',
-              padding: '6px 14px',
-              borderRadius: 6,
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <span>📋</span> Fixtures List
-          </button>
+      {/* Top Header & Round Navigation Pills (FIFA World Cup Style) */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+          <div>
+            <h4 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+              Knockout Bracket
+            </h4>
+            <p style={{ color: '#64748b', fontSize: '12px', margin: '2px 0 0 0' }}>
+              Single-elimination championship tree with direct tournament path
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={() => setViewMode('tree')}
+              style={{
+                background: viewMode === 'tree' ? '#0284c7' : '#ffffff',
+                color: viewMode === 'tree' ? '#ffffff' : '#475569',
+                border: viewMode === 'tree' ? '1px solid #0284c7' : '1px solid #cbd5e1',
+                padding: '5px 12px',
+                borderRadius: 6,
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              🌳 Bracket Tree
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                background: viewMode === 'list' ? '#0284c7' : '#ffffff',
+                color: viewMode === 'list' ? '#ffffff' : '#475569',
+                border: viewMode === 'list' ? '1px solid #0284c7' : '1px solid #cbd5e1',
+                padding: '5px 12px',
+                borderRadius: 6,
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              📋 Fixtures List
+            </button>
+
+            {isOrganizer && onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                disabled={loading}
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  color: '#475569',
+                  padding: '5px 12px',
+                  borderRadius: 6,
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {loading ? '⚡...' : '🔄 Regenerate'}
+              </button>
+            )}
+          </div>
         </div>
 
-        {isOrganizer && onRegenerate && (
-          <button
-            onClick={onRegenerate}
-            disabled={loading}
-            style={{
-              background: '#f8fafc',
-              border: '1px solid #cbd5e1',
-              color: '#475569',
-              padding: '6px 14px',
-              borderRadius: 6,
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            {loading ? '⚡ Regenerating...' : '🔄 Regenerate Fixtures & BYEs'}
-          </button>
+        {/* Round Filter Pills (FIFA style) */}
+        {viewMode === 'tree' && (
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 6 }}>
+            <button
+              onClick={() => scrollToRound('ALL')}
+              style={{
+                background: activeRoundFilter === 'ALL' ? '#0284c7' : '#ffffff',
+                color: activeRoundFilter === 'ALL' ? '#ffffff' : '#475569',
+                border: activeRoundFilter === 'ALL' ? '1px solid #0284c7' : '1px solid #cbd5e1',
+                borderRadius: 20,
+                padding: '4px 14px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              All Rounds
+            </button>
+            {sortedRoundKeys.map((roundKey) => {
+              const rMatches = roundMap[roundKey];
+              const roundTitle = rMatches[0]?.round || `Round ${roundKey}`;
+              const isActive = activeRoundFilter === roundKey;
+
+              return (
+                <button
+                  key={roundKey}
+                  onClick={() => scrollToRound(roundKey)}
+                  style={{
+                    background: isActive ? '#0284c7' : '#ffffff',
+                    color: isActive ? '#ffffff' : '#475569',
+                    border: isActive ? '1px solid #0284c7' : '1px solid #cbd5e1',
+                    borderRadius: 20,
+                    padding: '4px 14px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {roundTitle}
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
 
       {/* Success Notification */}
       {successMessage && (
-        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '10px 14px', borderRadius: 6, fontSize: '13px', marginBottom: 14 }}>
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '8px 12px', borderRadius: 6, fontSize: '13px', marginBottom: 12 }}>
           ✓ {successMessage}
         </div>
       )}
 
-      {/* VIEW MODE 1: VISUAL BRACKET TREE */}
+      {/* VIEW MODE 1: VISUAL BRACKET TREE WITH CONNECTING LINES */}
       {viewMode === 'tree' ? (
         <div
+          ref={scrollContainerRef}
           style={{
             overflowX: 'auto',
-            paddingBottom: 16,
-            display: 'flex',
-            gap: 24,
-            minHeight: '440px',
-            alignItems: 'stretch',
+            overflowY: 'auto',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 12,
+            padding: '24px 20px',
+            boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)',
           }}
         >
-          {sortedRoundKeys.map((roundKey) => {
-            const roundMatches = roundMap[roundKey];
-            const roundTitle = roundMatches[0]?.round || `Round ${roundKey}`;
+          {/* Main Flex Row of Columns and Connecting SVG Lines */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'flex-start',
+              minWidth: '100%',
+              position: 'relative',
+            }}
+          >
+            {sortedRoundKeys.map((roundKey, rIndex) => {
+              const roundMatches = roundMap[roundKey];
+              const roundTitle = roundMatches[0]?.round || `Round ${roundKey}`;
+              const isNextRoundAvailable = rIndex < numRounds - 1;
 
-            return (
-              <div
-                key={roundKey}
-                style={{
-                  minWidth: '290px',
-                  maxWidth: '320px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 10,
-                  padding: 12,
-                }}
-              >
-                {/* Round Header */}
-                <div
-                  style={{
-                    background: '#ffffff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 8,
-                    padding: '8px 12px',
-                    textAlign: 'center',
-                    marginBottom: 14,
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                  }}
-                >
-                  <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block' }}>
-                    {roundTitle}
-                  </strong>
-                  <span style={{ fontSize: '11px', color: '#64748b' }}>
-                    {roundMatches.length} {roundMatches.length === 1 ? 'Match' : 'Matches'}
-                  </span>
-                </div>
-
-                {/* Match Cards aligned vertically */}
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-around',
-                    flex: 1,
-                    gap: 16,
-                  }}
-                >
-                  {roundMatches.map((m) => {
-                    const isCompleted = m.status === 'COMPLETED';
-                    const isBye = m.isBye || m.score?.note?.includes('BYE');
-
-                    return (
-                      <div
-                        key={m._id}
+              return (
+                <React.Fragment key={roundKey}>
+                  {/* Round Column */}
+                  <div
+                    ref={(el) => (roundColumnRefs.current[roundKey] = el)}
+                    style={{
+                      width: `${CARD_WIDTH}px`,
+                      flexShrink: 0,
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Round Header Column Label */}
+                    <div
+                      style={{
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderBottom: '2px solid #e2e8f0',
+                        marginBottom: 12,
+                        paddingBottom: 6,
+                      }}
+                    >
+                      <span
                         style={{
-                          background: '#ffffff',
-                          border: isBye ? '1.5px solid #86efac' : '1px solid #e2e8f0',
-                          borderRadius: 8,
-                          padding: 12,
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                          position: 'relative',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#0f172a',
+                          letterSpacing: '0.2px',
                         }}
                       >
-                        {/* Match Title & Status */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#0284c7' }}>
-                            Match #{m.matchNumber}
-                          </span>
-                          {isBye ? (
-                            <span
-                              style={{
-                                background: '#dcfce7',
-                                color: '#15803d',
-                                fontSize: '10px',
-                                fontWeight: 800,
-                                padding: '2px 8px',
-                                borderRadius: 10,
-                                border: '1px solid #bbf7d0',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.3px',
-                              }}
-                            >
-                              ★ BYE - Advanced to Round 2
-                            </span>
-                          ) : (
-                            <span
-                              className={`badge ${
-                                m.status === 'LIVE' ? 'badge-blue' : m.status === 'COMPLETED' ? 'badge-green' : 'badge-amber'
-                              }`}
-                              style={{ fontSize: '10px', padding: '2px 6px' }}
-                            >
-                              {m.status}
-                            </span>
-                          )}
-                        </div>
+                        {roundTitle}
+                      </span>
+                    </div>
 
-                        {/* Team A Row */}
-                        <div
-                          style={{
-                            background: m.winnerId?._id === m.teamA?._id ? '#f0fdf4' : '#f8fafc',
-                            border: m.winnerId?._id === m.teamA?._id ? '1px solid #86efac' : '1px solid #f1f5f9',
-                            borderRadius: 6,
-                            padding: '6px 10px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: 4,
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-                            <span style={{ fontSize: '13px' }}>🛡️</span>
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                fontWeight: m.winnerId?._id === m.teamA?._id ? 800 : 600,
-                                color: m.teamA ? '#0f172a' : '#94a3b8',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                              }}
-                            >
-                              {m.teamA?.name || (m.sourceMatchA ? `Winner of Match #${m.sourceMatchA.matchNumber}` : 'TBD')}
-                            </span>
-                          </div>
-                          {m.score?.teamAScore && (
-                            <span style={{ fontWeight: 700, fontSize: '12px', color: '#0284c7' }}>
-                              {m.score.teamAScore}
-                            </span>
-                          )}
-                        </div>
+                    {/* Column Match Cards Area */}
+                    <div style={{ position: 'relative', height: `${TOTAL_HEIGHT}px`, width: '100%' }}>
+                      {roundMatches.map((m, mIndex) => {
+                        const yCenter = getY(rIndex, mIndex);
+                        const top = yCenter - CARD_HEIGHT / 2;
+                        const isCompleted = m.status === 'COMPLETED';
+                        const isBye = m.isBye || m.score?.note?.includes('BYE');
+                        const isWinnerA = m.winnerId?._id && m.teamA?._id && m.winnerId._id === m.teamA._id;
+                        const isWinnerB = m.winnerId?._id && m.teamB?._id && m.winnerId._id === m.teamB._id;
 
-                        {/* Team B Row */}
-                        {isBye ? (
+                        return (
                           <div
+                            key={m._id}
+                            onClick={() => isOrganizer && !isBye && openScheduleModal(m)}
+                            title={isOrganizer && !isBye ? 'Click to edit date, venue, or assign scorer' : ''}
                             style={{
-                              background: '#f8fafc',
-                              border: '1px dashed #cbd5e1',
-                              borderRadius: 6,
-                              padding: '5px 10px',
-                              color: '#94a3b8',
-                              fontSize: '11px',
-                              fontStyle: 'italic',
-                              textAlign: 'center',
-                              marginBottom: 8,
-                            }}
-                          >
-                            (Automatic BYE Slot)
-                          </div>
-                        ) : (
-                          <div
-                            style={{
-                              background: m.winnerId?._id === m.teamB?._id ? '#f0fdf4' : '#f8fafc',
-                              border: m.winnerId?._id === m.teamB?._id ? '1px solid #86efac' : '1px solid #f1f5f9',
-                              borderRadius: 6,
-                              padding: '6px 10px',
+                              position: 'absolute',
+                              top: `${top}px`,
+                              left: 0,
+                              width: `${CARD_WIDTH}px`,
+                              height: `${CARD_HEIGHT}px`,
+                              background: '#ffffff',
+                              border: isBye ? '1.5px solid #86efac' : isCompleted ? '1px solid #cbd5e1' : '1px solid #e2e8f0',
+                              borderRadius: 8,
+                              padding: '6px 8px',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                              boxSizing: 'border-box',
                               display: 'flex',
+                              flexDirection: 'column',
                               justifyContent: 'space-between',
-                              alignItems: 'center',
-                              marginBottom: 8,
+                              cursor: isOrganizer && !isBye ? 'pointer' : 'default',
+                              transition: 'all 0.15s ease',
+                              zIndex: 2,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.08)';
+                              e.currentTarget.style.borderColor = isBye ? '#4ade80' : '#94a3b8';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
+                              e.currentTarget.style.borderColor = isBye ? '#86efac' : isCompleted ? '#cbd5e1' : '#e2e8f0';
                             }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
-                              <span style={{ fontSize: '13px' }}>🛡️</span>
+                            {/* Card Top: Match ID & Status / Time */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', lineHeight: 1 }}>
                               <span
                                 style={{
-                                  fontSize: '12px',
-                                  fontWeight: m.winnerId?._id === m.teamB?._id ? 800 : 600,
-                                  color: m.teamB ? '#0f172a' : '#94a3b8',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
+                                  fontSize: '11px',
+                                  fontWeight: 800,
+                                  color: '#64748b',
+                                  letterSpacing: '0.3px',
                                 }}
                               >
-                                {m.teamB?.name || (m.sourceMatchB ? `Winner of Match #${m.sourceMatchB.matchNumber}` : 'TBD')}
+                                M{m.matchNumber}
                               </span>
+                              {getMatchTimeBadge(m)}
                             </div>
-                            {m.score?.teamBScore && (
-                              <span style={{ fontWeight: 700, fontSize: '12px', color: '#0284c7' }}>
-                                {m.score.teamBScore}
-                              </span>
-                            )}
-                          </div>
-                        )}
 
-                        {/* Metadata Footer */}
-                        <div style={{ fontSize: '11px', color: '#64748b', display: 'flex', flexDirection: 'column', gap: 2, marginBottom: isOrganizer && !isBye ? 6 : 0 }}>
-                          <span>⏰ {formatDateTime(m.scheduledDate) || 'TBD'}</span>
-                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            📍 {m.venue || tournament.venueName || 'Main Ground'}
-                          </span>
-                          {m.assignedScorer && (
-                            <span style={{ color: '#16a34a', fontWeight: 600 }}>
-                              ⏱️ Scorer: {m.assignedScorer.name}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Organizer Action: Edit Schedule */}
-                        {isOrganizer && !isBye && (
-                          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 6, marginTop: 4, textAlign: 'right' }}>
-                            <button
-                              onClick={() => openScheduleModal(m)}
+                            {/* Team A Row */}
+                            <div
                               style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#0284c7',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
                                 padding: '2px 4px',
+                                borderRadius: 4,
+                                background: isWinnerA ? '#f0fdf4' : 'transparent',
+                                fontSize: '11px',
+                                lineHeight: 1.2,
                               }}
                             >
-                              📅 Edit Schedule & Scorer →
-                            </button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', flex: 1 }}>
+                                <span style={{ fontSize: '11px' }}>🛡️</span>
+                                <span
+                                  style={{
+                                    fontWeight: isWinnerA ? 800 : 600,
+                                    color: m.teamA ? '#0f172a' : '#94a3b8',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    maxWidth: '145px',
+                                  }}
+                                >
+                                  {m.teamA?.name || (m.sourceMatchA ? `W${m.sourceMatchA.matchNumber}` : 'TBD')}
+                                </span>
+                              </div>
+                              <span
+                                style={{
+                                  fontWeight: isWinnerA ? 800 : 700,
+                                  color: isWinnerA ? '#16a34a' : '#334155',
+                                  minWidth: '16px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                {m.score?.teamAScore || (isBye ? '★' : isCompleted ? '0' : '')}
+                              </span>
+                            </div>
+
+                            {/* Team B Row */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '2px 4px',
+                                borderRadius: 4,
+                                background: isWinnerB ? '#f0fdf4' : 'transparent',
+                                fontSize: '11px',
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', flex: 1 }}>
+                                <span style={{ fontSize: '11px' }}>{isBye ? '⭕' : '🛡️'}</span>
+                                <span
+                                  style={{
+                                    fontWeight: isWinnerB ? 800 : 600,
+                                    color: m.teamB ? '#0f172a' : isBye ? '#94a3b8' : '#94a3b8',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    maxWidth: '145px',
+                                    fontStyle: isBye ? 'italic' : 'normal',
+                                  }}
+                                >
+                                  {isBye ? 'BYE Slot' : m.teamB?.name || (m.sourceMatchB ? `W${m.sourceMatchB.matchNumber}` : 'TBD')}
+                                </span>
+                              </div>
+                              <span
+                                style={{
+                                  fontWeight: isWinnerB ? 800 : 700,
+                                  color: isWinnerB ? '#16a34a' : '#334155',
+                                  minWidth: '16px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                {isBye ? '' : (m.score?.teamBScore || (isCompleted ? '0' : ''))}
+                              </span>
+                            </div>
+
+                            {/* Card Footer: Assigned Scorer or Schedule Hint */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: '#94a3b8', lineHeight: 1 }}>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>
+                                📍 {m.venue || tournament?.venueName || 'Main Ground'}
+                              </span>
+                              {m.assignedScorer && (
+                                <span style={{ color: '#16a34a', fontWeight: 600 }}>⏱️</span>
+                              )}
+                              {isOrganizer && !isBye && (
+                                <span style={{ color: '#0284c7', fontSize: '9px', fontWeight: 700 }}>EDIT</span>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Connecting Bracket Lines SVG (Between this round and next round) */}
+                  {isNextRoundAvailable && (
+                    <div
+                      style={{
+                        width: `${CONNECTOR_WIDTH}px`,
+                        flexShrink: 0,
+                        position: 'relative',
+                        paddingTop: '44px', // offset for round header title height
+                      }}
+                    >
+                      <svg
+                        width={CONNECTOR_WIDTH}
+                        height={TOTAL_HEIGHT}
+                        style={{ display: 'block', overflow: 'visible' }}
+                      >
+                        {(() => {
+                          const nextRoundMatches = roundMap[sortedRoundKeys[rIndex + 1]] || [];
+                          const paths = [];
+
+                          for (let k = 0; k < nextRoundMatches.length; k++) {
+                            const yTop = getY(rIndex, 2 * k);
+                            const yBot = getY(rIndex, 2 * k + 1);
+                            const yTarget = getY(rIndex + 1, k);
+                            const xMid = CONNECTOR_WIDTH / 2;
+                            const xEnd = CONNECTOR_WIDTH;
+                            const R = Math.min(8, Math.max(2, (yBot - yTop) / 4));
+
+                            // Curved bracket connector path
+                            const pathData = `
+                              M 0 ${yTop}
+                              H ${xMid - R}
+                              Q ${xMid} ${yTop} ${xMid} ${yTop + R}
+                              V ${yBot - R}
+                              Q ${xMid} ${yBot} ${xMid - R} ${yBot}
+                              H 0
+                              M ${xMid} ${yTarget}
+                              H ${xEnd}
+                            `;
+
+                            paths.push(
+                              <path
+                                key={`conn-${rIndex}-${k}`}
+                                d={pathData}
+                                fill="none"
+                                stroke="#cbd5e1"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            );
+                          }
+                          return paths;
+                        })()}
+                      </svg>
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
       ) : (
         /* VIEW MODE 2: CHRONOLOGICAL FIXTURES LIST */
@@ -469,7 +623,7 @@ export default function BracketViewer({
 
                 <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                   <div style={{ display: 'flex', gap: 16 }}>
-                    <span>📍 {m.venue || tournament.venueName}</span>
+                    <span>📍 {m.venue || tournament?.venueName}</span>
                     <span>⏰ {formatDateTime(m.scheduledDate) || 'TBD'}</span>
                     {m.assignedScorer && (
                       <span style={{ color: '#16a34a', fontWeight: 600 }}>
