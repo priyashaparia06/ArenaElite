@@ -464,6 +464,21 @@ exports.getTournaments = async (req, res) => {
       };
     });
 
+    // Sort tournaments: Open registrations ALWAYS on top, then by earliest registration deadline
+    data.sort((a, b) => {
+      // 1. Open registration tournaments on top
+      if (a.isRegistrationOpen && !b.isRegistrationOpen) return -1;
+      if (!a.isRegistrationOpen && b.isRegistrationOpen) return 1;
+
+      // 2. If both are open, prioritize by earliest registration deadline
+      if (a.isRegistrationOpen && b.isRegistrationOpen) {
+        return new Date(a.registrationDeadline || a.startDate) - new Date(b.registrationDeadline || b.startDate);
+      }
+
+      // 3. For closed tournaments, sort by newest start date
+      return new Date(b.startDate || 0) - new Date(a.startDate || 0);
+    });
+
     res.json(data);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch tournaments', error: err.message });

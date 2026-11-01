@@ -93,6 +93,27 @@ async function seedDatabase() {
       console.log('Seeded Captain User: captain@arenaelite.com / Captain@123456');
     }
 
+    // 4b. Seed Field Scorer (for instant testing)
+    const scorerEmail = 'scorer@arenaelite.com';
+    let scorer = await User.findOne({ email: scorerEmail });
+    if (!scorer) {
+      const hashedPassword = await bcrypt.hash('Scorer@123456', salt);
+      scorer = await User.create({
+        name: 'Pravin Joshi',
+        email: scorerEmail,
+        phone: '+91 98765 43210',
+        password: hashedPassword,
+        role: 'SCORER',
+        district: 'Ahmedabad',
+        approvalStatus: 'APPROVED',
+        isActive: true,
+        createdBy: organizer?._id || null,
+      });
+      console.log('Seeded Field Scorer: scorer@arenaelite.com / Scorer@123456');
+    } else {
+      console.log('Field Scorer already exists');
+    }
+
     // 5. Seed Sports Categories with Rule Configurations
     const sportsData = [
       {

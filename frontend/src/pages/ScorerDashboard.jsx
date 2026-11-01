@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import API from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
+import LiveScorerConsole from '../components/LiveScorerConsole';
 
 export default function ScorerDashboard() {
   const { user } = useContext(AuthContext);
@@ -9,6 +10,7 @@ export default function ScorerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('today'); // 'today' | 'upcoming' | 'completed'
+  const [selectedMatchForScoring, setSelectedMatchForScoring] = useState(null);
 
   const fetchAssignedMatches = async () => {
     try {
@@ -347,7 +349,7 @@ export default function ScorerDashboard() {
                   </div>
                 </div>
 
-                {/* Delegation Tag */}
+                {/* Delegation Tag & Live Scoring Action Button */}
                 <div
                   style={{
                     borderTop: '1px solid #f1f5f9',
@@ -356,25 +358,61 @@ export default function ScorerDashboard() {
                     color: '#0369a1',
                     background: '#f0f9ff',
                     margin: '-4px -20px -20px -20px',
-                    padding: '10px 20px',
+                    padding: '12px 20px',
                     borderBottomLeftRadius: 12,
                     borderBottomRightRadius: 12,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 8,
                   }}
                 >
                   <span style={{ fontWeight: 600 }}>
                     🎯 Assigned to You ({user?.name})
                   </span>
-                  <span style={{ fontSize: '11px', color: '#64748b' }}>
-                    Awaiting Live Scoring Activation
-                  </span>
+
+                  <button
+                    onClick={() => setSelectedMatchForScoring(m)}
+                    style={{
+                      background: isLive ? '#dc2626' : isCompleted ? '#f1f5f9' : '#0284c7',
+                      color: isCompleted ? '#334155' : '#ffffff',
+                      border: isCompleted ? '1px solid #cbd5e1' : 'none',
+                      padding: '6px 14px',
+                      borderRadius: 6,
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    {isLive
+                      ? '🔴 Continue Scoring'
+                      : isCompleted
+                      ? '👁️ View Final Scorecard'
+                      : '⚡ Start & Score Match'}
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* LIVE SCORER CONSOLE MODAL */}
+      {selectedMatchForScoring && (
+        <LiveScorerConsole
+          match={selectedMatchForScoring}
+          onClose={() => setSelectedMatchForScoring(null)}
+          onMatchUpdated={(updatedMatch) => {
+            setMatches((prev) =>
+              prev.map((m) => (m._id === updatedMatch._id ? updatedMatch : m))
+            );
+            setSelectedMatchForScoring(updatedMatch);
+          }}
+        />
       )}
     </div>
   );

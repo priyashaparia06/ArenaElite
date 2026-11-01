@@ -62,7 +62,7 @@ function Navbar() {
             textDecoration: 'none',
           }}
         >
-          Tournaments
+          ⚡ Live Scores
         </Link>
       </div>
 

@@ -147,33 +147,25 @@ export default function OrganizerDashboard() {
       return;
     }
 
-    const bracketSize = Math.pow(2, Math.ceil(Math.log2(N)));
-    const byesCount = bracketSize - N;
-
-    if (byesCount > 0) {
-      // Non-power-of-2 teams: prompt organizer for BYE strategy selection
-      setByeModalTournament({ ...tournament, _force: force });
-      setShowByeModal(true);
-    } else {
-      // Perfect power of 2: generate directly
-      executeGenerateMatches(tournament._id, 'SEEDED', force);
-    }
+    // Open Random Lottery Draw confirmation modal
+    setByeModalTournament({ ...tournament, _force: force });
+    setShowByeModal(true);
   };
 
-  const handleConfirmByeStrategy = async (strategy) => {
+  const handleConfirmByeStrategy = async () => {
     if (!byeModalTournament) return;
     const tournamentId = byeModalTournament._id;
     const force = !!byeModalTournament._force;
     setShowByeModal(false);
-    await executeGenerateMatches(tournamentId, strategy, force);
+    await executeGenerateMatches(tournamentId, 'LOTTERY', force);
   };
 
-  const executeGenerateMatches = async (tournamentId, byeStrategy = 'SEEDED', force = false) => {
+  const executeGenerateMatches = async (tournamentId, byeStrategy = 'LOTTERY', force = false) => {
     try {
       setLoadingMatches(true);
       setMatchActionMessage('');
       const res = await API.post(`/matches/tournament/${tournamentId}/generate`, {
-        byeStrategy,
+        byeStrategy: 'LOTTERY',
         force,
       });
       setTournamentMatches(res.data.matches);

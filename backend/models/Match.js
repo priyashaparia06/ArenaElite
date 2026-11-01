@@ -62,6 +62,19 @@ const matchSchema = new mongoose.Schema(
       teamBScore: { type: String, default: '' },
       resultSummary: { type: String, default: '' },
       note: { type: String, default: '' },
+      details: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {},
+      },
+      timeline: [
+        {
+          event: { type: String, default: '' },
+          team: { type: String, default: '' },
+          player: { type: String, default: '' },
+          time: { type: String, default: '' },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
     },
     winnerId: {
       type: mongoose.Schema.Types.ObjectId,

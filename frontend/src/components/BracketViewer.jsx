@@ -418,8 +418,7 @@ export default function BracketViewer({
                                 lineHeight: 1.2,
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', flex: 1 }}>
-                                <span style={{ fontSize: '11px' }}>🛡️</span>
+                              <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', flex: 1 }}>
                                 <span
                                   style={{
                                     fontWeight: isWinnerA ? 800 : 600,
@@ -427,7 +426,7 @@ export default function BracketViewer({
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
-                                    maxWidth: '145px',
+                                    maxWidth: '155px',
                                   }}
                                 >
                                   {m.teamA?.name || (m.sourceMatchA ? `W${m.sourceMatchA.matchNumber}` : 'TBD')}
@@ -458,8 +457,7 @@ export default function BracketViewer({
                                 lineHeight: 1.2,
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', flex: 1 }}>
-                                <span style={{ fontSize: '11px' }}>{isBye ? '⭕' : '🛡️'}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', flex: 1 }}>
                                 <span
                                   style={{
                                     fontWeight: isWinnerB ? 800 : 600,
@@ -467,7 +465,7 @@ export default function BracketViewer({
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
-                                    maxWidth: '145px',
+                                    maxWidth: '155px',
                                     fontStyle: isBye ? 'italic' : 'normal',
                                   }}
                                 >

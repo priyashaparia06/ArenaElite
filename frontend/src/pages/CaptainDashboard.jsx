@@ -38,6 +38,7 @@ export default function CaptainDashboard() {
   const [tournaments, setTournaments] = useState([]);
   const [filterSport, setFilterSport] = useState('');
   const [filterDistrict, setFilterDistrict] = useState('');
+  const [filterRegStatus, setFilterRegStatus] = useState('ALL'); // 'ALL' | 'OPEN' | 'CLOSED'
   const [selectedTournamentForApply, setSelectedTournamentForApply] = useState(null);
   const [selectedTeamIdToApply, setSelectedTeamIdToApply] = useState('');
   const [applyNotes, setApplyNotes] = useState('');
@@ -245,11 +246,41 @@ export default function CaptainDashboard() {
     }
   };
 
-  const filteredTournaments = tournaments.filter((t) => {
-    const matchSport = !filterSport || t.sportCategory === filterSport;
-    const matchDistrict = !filterDistrict || t.district.toLowerCase().includes(filterDistrict.toLowerCase());
-    return matchSport && matchDistrict;
-  });
+  const isTournamentRegOpen = (t) => {
+    const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
+    const isSlotsFull = (t.approvedTeamsCount || 0) >= t.maxTeams;
+    return (t.isRegistrationOpen ?? (t.status === 'REGISTRATION_OPEN')) && !isDeadlinePassed && !isSlotsFull;
+  };
+
+  const openTournamentsCount = tournaments.filter(isTournamentRegOpen).length;
+
+  const filteredTournaments = tournaments
+    .filter((t) => {
+      const matchSport = !filterSport || t.sportCategory === filterSport;
+      const matchDistrict = !filterDistrict || t.district.toLowerCase().includes(filterDistrict.toLowerCase());
+      const isRegOpen = isTournamentRegOpen(t);
+
+      if (filterRegStatus === 'OPEN' && !isRegOpen) return false;
+      if (filterRegStatus === 'CLOSED' && isRegOpen) return false;
+
+      return matchSport && matchDistrict;
+    })
+    .sort((a, b) => {
+      const isOpenA = isTournamentRegOpen(a);
+      const isOpenB = isTournamentRegOpen(b);
+
+      // 1. OPEN REGISTRATION TOURNAMENTS ALWAYS ON TOP
+      if (isOpenA && !isOpenB) return -1;
+      if (!isOpenA && isOpenB) return 1;
+
+      // 2. If both are open, prioritize by soonest registration deadline
+      if (isOpenA && isOpenB) {
+        return new Date(a.registrationDeadline || a.startDate) - new Date(b.registrationDeadline || b.startDate);
+      }
+
+      // 3. For closed tournaments, sort by newest start date
+      return new Date(b.startDate || 0) - new Date(a.startDate || 0);
+    });
 
   return (
     <div style={{ padding: '28px 24px', maxWidth: '1300px', margin: '0 auto', width: '100%' }}>
@@ -535,7 +566,7 @@ export default function CaptainDashboard() {
             <select
               value={filterSport}
               onChange={(e) => setFilterSport(e.target.value)}
-              style={{ padding: '8px 12px' }}
+              style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #cbd5e1' }}
             >
               <option value="">All Sports Categories</option>
               {sports.map((s) => (
@@ -559,8 +590,43 @@ export default function CaptainDashboard() {
                 Clear City Filter
               </button>
             )}
-            <div style={{ color: '#64748b', fontSize: '13px', alignSelf: 'center' }}>
-              Showing {filteredTournaments.length} open competitions
+
+            {/* Registration Status Filter */}
+            <select
+              value={filterRegStatus}
+              onChange={(e) => setFilterRegStatus(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 6,
+                border: '1px solid #cbd5e1',
+                fontSize: '13px',
+                background: filterRegStatus === 'OPEN' ? '#f0fdf4' : '#ffffff',
+                color: filterRegStatus === 'OPEN' ? '#16a34a' : '#0f172a',
+                fontWeight: 600,
+              }}
+            >
+              <option value="ALL">All Competitions ({tournaments.length})</option>
+              <option value="OPEN">🟢 Open for Registration Only ({openTournamentsCount})</option>
+              <option value="CLOSED">Registration Closed</option>
+            </select>
+
+            <div style={{ color: '#64748b', fontSize: '13px', alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span>Showing <strong>{filteredTournaments.length}</strong> tournaments</span>
+              <span
+                style={{
+                  background: '#dcfce7',
+                  color: '#15803d',
+                  padding: '3px 10px',
+                  borderRadius: 12,
+                  fontWeight: 700,
+                  fontSize: '11px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                🟢 {openTournamentsCount} Open on Top
+              </span>
             </div>
           </div>
 
@@ -569,30 +635,48 @@ export default function CaptainDashboard() {
             {filteredTournaments.map((t) => {
               const sportInfo = sports.find((s) => s.code === t.sportCategory);
               const alreadyApplied = myApplications.some((a) => a.tournamentId === t._id);
+              const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
+              const isSlotsFull = (t.approvedTeamsCount || 0) >= t.maxTeams;
+              const isRegOpen = (t.isRegistrationOpen ?? (t.status === 'REGISTRATION_OPEN')) && !isDeadlinePassed && !isSlotsFull;
 
               return (
                 <div
                   key={t._id}
                   style={{
                     background: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    border: isRegOpen ? '1.5px solid #86efac' : '1px solid #e2e8f0',
                     borderRadius: 10,
                     padding: 22,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    boxShadow: isRegOpen ? '0 4px 12px -2px rgba(34, 197, 94, 0.12)' : '0 1px 3px rgba(0,0,0,0.05)',
+                    position: 'relative',
                   }}
                 >
-                  {(() => {
-                    const isDeadlinePassed = new Date() > new Date(t.registrationDeadline);
-                    const isSlotsFull = (t.approvedTeamsCount || 0) >= t.maxTeams;
-                    const isRegOpen = t.isRegistrationOpen && !isDeadlinePassed && !isSlotsFull;
+                  {isRegOpen && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: -10,
+                        left: 18,
+                        background: '#16a34a',
+                        color: '#ffffff',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: 10,
+                        letterSpacing: '0.4px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      }}
+                    >
+                      ★ Registration Open
+                    </div>
+                  )}
 
-                    return (
-                      <>
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                               <span style={{ fontSize: '24px' }}>{sportInfo?.icon || '🏆'}</span>
                               <div>
@@ -695,12 +779,9 @@ export default function CaptainDashboard() {
                             </button>
                           )}
                         </div>
-                      </>
+                      </div>
                     );
-                  })()}
-                </div>
-              );
-            })}
+                  })}
           </div>
         </div>
       )}

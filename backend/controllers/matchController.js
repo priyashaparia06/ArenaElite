@@ -121,7 +121,7 @@ exports.getTournamentTeamStats = async (req, res) => {
 exports.generateTournamentMatches = async (req, res) => {
   try {
     const { tournamentId } = req.params;
-    const { byeStrategy = 'SEEDED', force = false } = { ...req.query, ...req.body };
+    const { force = false } = { ...req.query, ...req.body };
 
     const tournament = await Tournament.findById(tournamentId);
     if (!tournament) {
@@ -167,43 +167,14 @@ exports.generateTournamentMatches = async (req, res) => {
     const byesCount = bracketSize - N;
     const totalRounds = Math.log2(bracketSize);
 
-    // 2. Fetch and order teams according to selected strategy
-    let orderedTeamIds = [];
-
-    if (byeStrategy === 'LOTTERY') {
-      // Option B: Fair Random Lottery Draw via Fisher-Yates
-      const rawIds = approvedRegistrations.map((r) => r.teamId);
-      for (let i = rawIds.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [rawIds[i], rawIds[j]] = [rawIds[j], rawIds[i]];
-      }
-      orderedTeamIds = rawIds;
-    } else {
-      // Option A: Seeded by Past Performance / History
-      const teamStatsList = await Promise.all(
-        approvedRegistrations.map(async (r) => {
-          const stats = await getTeamHistoricalStats(r.teamId);
-          return {
-            teamId: r.teamId,
-            winRate: stats.winRate,
-            totalWins: stats.totalWins,
-            playersCount: stats.playersCount,
-            name: stats.team?.name || '',
-          };
-        })
-      );
-
-      teamStatsList.sort((a, b) => {
-        if (b.winRate !== a.winRate) return b.winRate - a.winRate;
-        if (b.totalWins !== a.totalWins) return b.totalWins - a.totalWins;
-        if (b.playersCount !== a.playersCount) return b.playersCount - a.playersCount;
-        return a.name.localeCompare(b.name);
-      });
-
-      orderedTeamIds = teamStatsList.map((t) => t.teamId);
+    // 2. Random Lottery Draw: Fair lottery draw of all approved squads using Fisher-Yates shuffle
+    const orderedTeamIds = approvedRegistrations.map((r) => r.teamId);
+    for (let i = orderedTeamIds.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [orderedTeamIds[i], orderedTeamIds[j]] = [orderedTeamIds[j], orderedTeamIds[i]];
     }
 
-    // Top byesCount teams get automatic BYE into Round 2
+    // Top byesCount randomly drawn squads get automatic BYE into Round 2
     const byeTeamIds = orderedTeamIds.slice(0, byesCount);
     const playingTeamIds = orderedTeamIds.slice(byesCount);
 
@@ -357,13 +328,14 @@ exports.generateTournamentMatches = async (req, res) => {
       .populate('sourceMatchB', 'matchNumber round')
       .sort({ roundIndex: 1, matchNumber: 1 });
 
+    const byeText = byesCount > 0 ? ` (${byesCount} BYEs awarded via Random Lottery Draw)` : '';
     res.status(201).json({
-      message: `Generated ${populatedMatches.length} tournament matches across ${totalRounds} round(s) successfully! (${byesCount} BYEs awarded via ${byeStrategy})`,
+      message: `Generated ${populatedMatches.length} tournament matches across ${totalRounds} round(s) successfully!${byeText}`,
       matches: populatedMatches,
       bracketSize,
       byesCount,
       totalRounds,
-      byeStrategy,
+      strategy: 'LOTTERY',
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to generate match fixtures', error: err.message });
@@ -511,5 +483,218 @@ exports.getMyAssignedMatches = async (req, res) => {
     res.json(matches);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch assigned matches', error: err.message });
+  }
+};
+
+// @desc Update match score, live status, and automatically advance winner in bracket tree
+// @route PUT /api/matches/:id/score
+exports.updateMatchScore = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, score, winnerId } = req.body;
+
+    const match = await Match.findById(id).populate('tournamentId');
+    if (!match) {
+      return res.status(404).json({ message: 'Match fixture not found' });
+    }
+
+    // Verify authority: Field Scorer assigned to this match, Tournament Organizer, or Admin
+    const isAssignedScorer = match.assignedScorer && match.assignedScorer.toString() === req.user.id;
+    const isTournamentOrganizer =
+      match.tournamentId && match.tournamentId.organizerId.toString() === req.user.id;
+    const isAdmin = req.user.role === 'ADMIN';
+
+    if (!isAssignedScorer && !isTournamentOrganizer && !isAdmin) {
+      return res.status(403).json({
+        message: 'Not authorized to score this match. Must be designated Field Scorer or Organizer.',
+      });
+    }
+
+    // Update status if provided
+    if (status) {
+      if (!['SCHEDULED', 'LIVE', 'COMPLETED', 'ABANDONED'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid match status provided' });
+      }
+      match.status = status;
+    }
+
+    // Update score fields if provided
+    if (score) {
+      if (score.teamAScore !== undefined) match.score.teamAScore = String(score.teamAScore);
+      if (score.teamBScore !== undefined) match.score.teamBScore = String(score.teamBScore);
+      if (score.resultSummary !== undefined) match.score.resultSummary = score.resultSummary;
+      if (score.note !== undefined) match.score.note = score.note;
+      if (score.details !== undefined) match.score.details = score.details;
+      if (score.timeline !== undefined) match.score.timeline = score.timeline;
+    }
+
+    // When marking match as COMPLETED: determine winner and advance bracket
+    if (status === 'COMPLETED') {
+      if (!winnerId) {
+        return res.status(400).json({
+          message: 'A winning squad (winnerId) is required to complete a knockout match fixture.',
+        });
+      }
+
+      // Validate winnerId corresponds to teamA or teamB
+      const validTeams = [match.teamA?.toString(), match.teamB?.toString()].filter(Boolean);
+      if (!validTeams.includes(winnerId.toString())) {
+        return res.status(400).json({
+          message: 'The selected winner must be one of the participating squads in this match.',
+        });
+      }
+
+      match.winnerId = winnerId;
+
+      // AUTOMATED KNOCKOUT BRACKET ADVANCEMENT:
+      // If this match points to a parent match in the next round, seed the winner immediately
+      if (match.nextMatchId && match.nextMatchSlot) {
+        const parentMatch = await Match.findById(match.nextMatchId);
+        if (parentMatch) {
+          parentMatch[match.nextMatchSlot] = winnerId;
+          await parentMatch.save();
+        }
+      }
+
+      // Update Team Performance Statistics
+      try {
+        await Team.findByIdAndUpdate(winnerId, {
+          $inc: { 'stats.matchesPlayed': 1, 'stats.wins': 1 },
+        });
+
+        const loserId =
+          match.teamA && match.teamA.toString() === winnerId.toString()
+            ? match.teamB
+            : match.teamA;
+
+        if (loserId) {
+          await Team.findByIdAndUpdate(loserId, {
+            $inc: { 'stats.matchesPlayed': 1, 'stats.losses': 1 },
+          });
+        }
+      } catch (statErr) {
+        console.error('Error updating team win/loss stats:', statErr);
+      }
+
+      // If Final Match: Mark tournament as ongoing/completed
+      if (match.round === 'Final' || !match.nextMatchId) {
+        if (match.tournamentId) {
+          await Tournament.findByIdAndUpdate(match.tournamentId._id, {
+            status: 'COMPLETED',
+          });
+        }
+      }
+    }
+
+    await match.save();
+
+    const populatedMatch = await Match.findById(id)
+      .populate('tournamentId', 'title sportCategory district venueName startDate endDate status')
+      .populate('teamA', 'name logoUrl district stats players')
+      .populate('teamB', 'name logoUrl district stats players')
+      .populate('winnerId', 'name logoUrl')
+      .populate('assignedScorer', 'name email phone')
+      .populate('sourceMatchA', 'matchNumber round')
+      .populate('sourceMatchB', 'matchNumber round');
+
+    // Real-time Push: Broadcast updated score directly to all connected viewers (SSE)
+    broadcastMatchUpdate(populatedMatch);
+
+    res.json({
+      message:
+        status === 'COMPLETED'
+          ? `Match #${match.matchNumber} completed! Winner advanced to next round.`
+          : `Match #${match.matchNumber} score updated successfully!`,
+      match: populatedMatch,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update match score', error: err.message });
+  }
+};
+
+// Active SSE client connections for real-time live score push
+const sseClients = new Set();
+
+// @desc Stream real-time score updates to viewers via Server-Sent Events (SSE)
+// @route GET /api/matches/live-stream
+exports.liveScoreStream = (req, res) => {
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+  });
+  res.write(': connected\n\n');
+  sseClients.add(res);
+
+  // Send periodic keep-alive comment every 25 seconds
+  const keepAlive = setInterval(() => {
+    try {
+      res.write(': keepalive\n\n');
+    } catch (e) {
+      clearInterval(keepAlive);
+      sseClients.delete(res);
+    }
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    sseClients.delete(res);
+  });
+};
+
+// Helper: Broadcast updated match to all connected SSE clients
+const broadcastMatchUpdate = (match) => {
+  if (!match) return;
+  const payload = JSON.stringify(match);
+  sseClients.forEach((client) => {
+    try {
+      client.write(`event: score_update\ndata: ${payload}\n\n`);
+    } catch (err) {
+      sseClients.delete(client);
+    }
+  });
+};
+
+// @desc Get public match feed (Live, Completed, Upcoming) across tournaments with CricHeroes formatting
+// @route GET /api/matches/public/feed
+exports.getPublicMatchFeed = async (req, res) => {
+  try {
+    const { sport, status, limit = 50 } = req.query;
+    const filter = { isBye: false };
+
+    if (sport && sport !== 'ALL') {
+      filter.sportCategory = sport.toUpperCase();
+    }
+
+    if (status && status !== 'ALL') {
+      filter.status = status.toUpperCase();
+    }
+
+    // Only matches that have at least one team populated
+    filter.$or = [{ teamA: { $ne: null } }, { teamB: { $ne: null } }];
+
+    const matches = await Match.find(filter)
+      .populate('tournamentId', 'title sportCategory district venueName startDate endDate status')
+      .populate('teamA', 'name logoUrl district stats players')
+      .populate('teamB', 'name logoUrl district stats players')
+      .populate('winnerId', 'name logoUrl')
+      .populate('assignedScorer', 'name email phone')
+      .limit(Number(limit));
+
+    // Sort order: LIVE first, then recent COMPLETED, then scheduled
+    const statusPriority = { LIVE: 1, COMPLETED: 2, SCHEDULED: 3, ABANDONED: 4 };
+    matches.sort((a, b) => {
+      const pA = statusPriority[a.status] || 5;
+      const pB = statusPriority[b.status] || 5;
+      if (pA !== pB) return pA - pB;
+      if (a.status === 'COMPLETED') return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+      if (a.status === 'SCHEDULED') return new Date(a.scheduledDate || 0) - new Date(b.scheduledDate || 0);
+      return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
+    });
+
+    res.json(matches);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch public match feed', error: err.message });
   }
 };
